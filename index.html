@@ -2,7 +2,6 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <!-- VIEWPORT CRUCIALE PER MOBILE -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#122F67">
@@ -11,34 +10,31 @@
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- JS Bootstrap -->
+    <!-- JS Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         :root { --napoli-blue: #122F67; --napoli-sky: #4DA8DA; --bg-light: #f4f6f9; --paid-green: #d1e7dd; }
-        body { background-color: var(--bg-light); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 20px; }
+        body { background-color: var(--bg-light); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 80px; }
         
-        /* HEADER RESPONSIVE */
-        .main-header { background-color: var(--napoli-blue); color: white; padding: 10px 15px; border-bottom: 5px solid var(--napoli-sky); display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 1000; }
+        .main-header { background-color: var(--napoli-blue); color: white; padding: 15px; border-bottom: 5px solid var(--napoli-sky); display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .club-title { font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-        .header-actions { display: flex; gap: 8px; }
 
-        /* CARDS */
         .card { border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-bottom: 20px; border-radius: 12px; overflow: hidden; background: white; }
         .card-header { font-weight: 600; padding: 10px 15px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; color: white; gap: 10px; }
         
         .header-db { background-color: #6c757d; } 
         .header-trip { background-color: var(--napoli-blue); } 
 
-        .trip-input { width: 60px; text-align: right; border: 1px solid #ced4da; border-radius: 4px; padding: 4px; font-weight: bold; font-size: 0.85rem; }
+        .trip-input { width: 70px; text-align: right; border: 1px solid #ced4da; border-radius: 4px; padding: 4px; font-weight: bold; font-size: 0.85rem; }
         .trip-input:focus { border-color: var(--napoli-sky); outline: none; background-color: #f0f8ff; }
 
-        .table { font-size: 0.85rem; }
-        .table td, .table th { vertical-align: middle; padding: 8px 5px; }
+        .table { font-size: 0.9rem; }
+        .table td, .table th { vertical-align: middle; }
         .total-cell { font-weight: bold; color: #198754; font-family: 'Consolas', monospace; }
-        .note-badge { font-size: 0.75rem; background-color: #fff3cd; color: #664d03; padding: 2px 6px; border-radius: 4px; border: 1px solid #ffecb5; display: inline-block; margin-top: 2px; }
+        .note-badge { font-size: 0.75rem; background-color: #fff3cd; color: #664d03; padding: 2px 6px; border-radius: 4px; border: 1px solid #ffecb5; display: inline-block; margin-top: 4px; }
 
         .row-paid { background-color: var(--paid-green) !important; transition: background-color 0.3s; }
         .row-paid input { background-color: rgba(255,255,255,0.6); }
@@ -46,8 +42,8 @@
 
         .form-check-input:checked { background-color: #198754 !important; border-color: #198754 !important; }
         
-        /* TOGGLE & TABS SCORREVOLI SU MOBILE */
         .toggle-wrapper { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; background: rgba(255,255,255,0.15); padding: 5px 10px; border-radius: 8px; }
+        .toggle-item { display: flex; align-items: center; margin-right: 10px; }
         
         .col-action-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); background: rgba(0,0,0,0.2); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
         .col-action-btn:hover { background: white; color: var(--napoli-blue); }
@@ -63,7 +59,7 @@
         .col-color-6 { color: #20c997 !important; }
 
         .footer-breakdown { 
-            font-size: 0.9rem; 
+            font-size: 1rem; 
             display: flex; 
             justify-content: space-around; 
             align-items: center; 
@@ -76,51 +72,28 @@
             font-family: 'Consolas', monospace;
             font-weight: bold;
         }
-        .footer-val { white-space: nowrap; margin: 2px 5px; }
+        .footer-val { white-space: nowrap; margin: 0 5px; }
 
         .scroll-area { max-height: 550px; overflow-y: auto; }
 
-        /* --- MOBILE SPECIFIC STYLES --- */
-        
-        /* Nascondi la barra di navigazione su PC */
-        .mobile-nav { display: none; }
+        /* MOBILE NAV */
+        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 2000; padding: 10px 0; justify-content: space-around; }
+        .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; color: #6c757d; font-weight: 600; text-transform: uppercase; }
+        .nav-btn.active { color: var(--napoli-blue); }
+        .nav-btn i { font-size: 1.4rem; margin-bottom: 4px; }
 
-        /* REGOLE PER SMARTPHONE (Schermi < 992px) */
         @media (max-width: 991px) {
-            body { padding-bottom: 80px; /* Spazio per la barra in basso */ }
-            
+            .mobile-nav { display: flex; }
             .main-header { flex-direction: column; gap: 10px; align-items: center; }
-            .header-actions { width: 100%; justify-content: center; flex-wrap: wrap; }
-            .club-title { text-align: center; }
-
-            /* Barra Navigazione Mobile */
-            .mobile-nav { 
-                display: flex; position: fixed; bottom: 0; left: 0; width: 100%; 
-                background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
-                z-index: 2000; padding: 8px 0; justify-content: space-around; 
-                border-top: 1px solid #dee2e6;
-            }
-            .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; color: #6c757d; font-weight: 700; text-transform: uppercase; }
-            .nav-btn.active { color: var(--napoli-blue); }
-            .nav-btn i { font-size: 1.4rem; margin-bottom: 3px; }
-
-            /* Gestione Visualizzazione Sezioni */
-            .section-view { display: none; } /* Nascondi tutto di base su mobile */
-            .section-view.active { display: block; animation: fadeIn 0.3s; } /* Mostra solo l'attiva */
-
-            /* Adattamenti UI */
+            .header-actions { justify-content: center; width: 100%; display: flex; }
+            .section-view { display: none; }
+            .section-view.active { display: block; animation: fadeIn 0.3s; }
             .toggle-wrapper { width: 100%; overflow-x: auto; white-space: nowrap; padding-bottom: 8px; justify-content: flex-start; }
             .card-header { flex-direction: column; align-items: stretch; }
             .header-title-container { justify-content: center; margin-bottom: 8px; }
-            
             .footer-breakdown { flex-direction: column; align-items: flex-start; }
         }
-
-        /* REGOLE PER DESKTOP (Schermi >= 992px) */
-        @media (min-width: 992px) {
-            .section-view { display: block !important; } /* Su PC mostra sempre tutto */
-        }
-
+        @media (min-width: 992px) { .section-view { display: block !important; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         #cloud-status { position: fixed; bottom: 80px; right: 20px; padding: 5px 12px; border-radius: 20px; font-weight: bold; z-index: 1999; font-size: 0.7rem; color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.3); transition: all 0.5s ease; }
@@ -151,13 +124,13 @@
     <div class="container-fluid mt-3">
         <div class="row">
             
-            <!-- SEZIONE 1: DATABASE SOCI (Classe section-view per gestione mobile) -->
+            <!-- SEZIONE 1: DATABASE SOCI -->
             <div class="col-lg-5 section-view active" id="sec-database">
                 <div class="card border-secondary">
                     <div class="card-header header-db">
                         <div class="d-flex align-items-center gap-2 justify-content-center">
                             <span><i class="fa-solid fa-database"></i> Database Soci</span>
-                            <span class="badge bg-light text-dark shadow-sm" style="font-size: 0.85rem;" id="db-total-count">0 Soci</span>
+                            <span class="badge bg-light text-dark shadow-sm" id="db-total-count">0 Soci</span>
                         </div>
                         <div class="d-flex gap-2 justify-content-center">
                             <button class="btn btn-sm btn-outline-light" onclick="toggleSection('form-soci-body')"><i class="fa-solid fa-plus"></i> Nuovo</button>
@@ -185,7 +158,7 @@
                         </div>
                         <div class="scroll-area">
                             <table class="table table-hover mb-0 table-sm" id="table-db">
-                                <thead class="table-light"><tr><th>Nominativo</th><th class="text-end">Azioni</th></tr></thead>
+                                <thead class="table-light"><tr><th>Nominativo</th><th class="text-end" style="min-width:110px;">Azioni</th></tr></thead>
                                 <tbody></tbody>
                             </table>
                         </div>
@@ -193,7 +166,7 @@
                 </div>
             </div>
 
-            <!-- SEZIONE 2: TRASFERTA (Classe section-view per gestione mobile) -->
+            <!-- SEZIONE 2: TRASFERTA -->
             <div class="col-lg-7 section-view" id="sec-trip">
                 <div class="card border-primary">
                     <div class="card-header header-trip">
@@ -205,7 +178,7 @@
                         </div>
                         
                         <div class="toggle-wrapper">
-                            <div id="dynamic-toggles" style="display: flex; gap: 8px; flex-wrap: nowrap;"></div>
+                            <div id="dynamic-toggles" style="display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto;"></div>
                             <div class="d-flex gap-1 ms-2">
                                 <div class="col-action-btn" onclick="addNewColumn()" title="Aggiungi Tab"><i class="fa-solid fa-plus"></i></div>
                                 <div class="col-action-btn btn-minus" onclick="removeColumn()" title="Rimuovi Tab"><i class="fa-solid fa-minus"></i></div>
@@ -228,15 +201,15 @@
                     </div>
                     
                     <div class="card-footer bg-light">
-                        <div class="footer-breakdown" id="footer-totals-container">
-                            <!-- Totali generati via JS -->
-                        </div>
+                        <div class="footer-breakdown" id="footer-totals-container"></div>
 
                         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                             <button class="btn btn-success btn-sm flex-grow-1 flex-md-grow-0" onclick="saveTripToArchive()"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
                             <button class="btn btn-danger btn-sm" onclick="clearTrip()"><i class="fa-solid fa-trash"></i></button>
                             <div class="input-group input-group-sm" style="width:90px;"><span class="input-group-text p-1">Aa</span><input type="number" id="pdfFontSize" class="form-control text-center p-1" value="10"></div>
-                            <button class="btn btn-primary fw-bold flex-grow-1 flex-md-grow-0" onclick="printTripPDF()"><i class="fa-solid fa-print"></i> PDF</button>
+                            <button class="btn btn-primary fw-bold flex-grow-1 flex-md-grow-0" onclick="printTripPDF()">
+                                <i class="fa-solid fa-print"></i> PDF/STAMPA
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -244,14 +217,9 @@
         </div>
     </div>
 
-    <!-- MOBILE NAVIGATION BAR (Visibile solo su Smartphone) -->
     <div class="mobile-nav">
-        <button class="nav-btn" id="nav-btn-db" onclick="switchMobileView('db')">
-            <i class="fa-solid fa-users"></i> DATABASE
-        </button>
-        <button class="nav-btn active" id="nav-btn-trip" onclick="switchMobileView('trip')">
-            <i class="fa-solid fa-list-check"></i> TRASFERTA
-        </button>
+        <button class="nav-btn" id="nav-btn-db" onclick="switchMobileView('db')"><i class="fa-solid fa-users"></i> DATABASE</button>
+        <button class="nav-btn active" id="nav-btn-trip" onclick="switchMobileView('trip')"><i class="fa-solid fa-list-check"></i> TRASFERTA</button>
     </div>
 
     <!-- MODALE ARCHIVIO -->
@@ -295,43 +263,25 @@
 
         document.addEventListener('DOMContentLoaded', () => { 
             loadLocalData(); 
-            // Se siamo su mobile, attiva vista trasferta di default
             if(window.innerWidth <= 991) switchMobileView('trip');
         });
 
-        // --- GESTIONE MOBILE VIEW ---
-        window.switchMobileView = function(view) {
+        function switchMobileView(view) {
             const dbSec = document.getElementById('sec-database');
             const tripSec = document.getElementById('sec-trip');
             const btnDb = document.getElementById('nav-btn-db');
             const btnTrip = document.getElementById('nav-btn-trip');
-
-            if(view === 'db') {
-                dbSec.classList.add('active');
-                tripSec.classList.remove('active');
-                btnDb.classList.add('active');
-                btnTrip.classList.remove('active');
-            } else {
-                dbSec.classList.remove('active');
-                tripSec.classList.add('active');
-                btnDb.classList.remove('active');
-                btnTrip.classList.add('active');
-            }
+            if(view === 'db') { dbSec.classList.add('active'); tripSec.classList.remove('active'); btnDb.classList.add('active'); btnTrip.classList.remove('active'); } 
+            else { dbSec.classList.remove('active'); tripSec.classList.add('active'); btnDb.classList.remove('active'); btnTrip.classList.add('active'); }
         };
 
         window.toggleDbList = function() {
             const c = document.getElementById('db-list-container');
             const b = document.getElementById('btn-toggle-list');
-            if (c.style.display === 'none') {
-                c.style.display = 'block';
-                b.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-            } else {
-                c.style.display = 'none';
-                b.innerHTML = '<i class="fa-solid fa-eye"></i>';
-            }
+            if (c.style.display === 'none') { c.style.display = 'block'; b.innerHTML = '<i class="fa-solid fa-eye-slash"></i>'; } 
+            else { c.style.display = 'none'; b.innerHTML = '<i class="fa-solid fa-eye"></i>'; }
         };
 
-        // --- CARICAMENTO E SALVATAGGIO ---
         function loadLocalData() {
             try {
                 const raw = localStorage.getItem(STORAGE_KEY);
@@ -374,13 +324,11 @@
             updateTripNameUI();
         };
 
-        // --- COLONNE DINAMICHE ---
         function getColColor(index) { return `col-color-${index % 7}`; }
 
         function renderDynamicHeader() {
             const container = document.getElementById('dynamic-toggles');
             const headerRow = document.getElementById('trip-header-row');
-            
             container.innerHTML = '';
             headerRow.innerHTML = '<th>Nominativo</th>';
 
@@ -436,7 +384,6 @@
             saveData(); renderTrip();
         };
 
-        // --- RENDER TRIP ---
         window.renderTrip = function() {
             renderDynamicHeader();
             const tbody = document.querySelector('#table-trip tbody');
@@ -479,7 +426,6 @@
                         <div class="d-flex flex-column">
                             <span class="text-uppercase fw-bold ${nameClass}" style="font-size:0.85rem;">${item.cognome} ${item.nome}${paidIcon}</span>
                             ${item.note?`<span class="note-badge">${item.note}</span>`:''}
-                            <small class="text-muted d-block d-md-none mt-1"><i class="fa-solid fa-pen" onclick="editTripName('${item.tripId}')"></i></small>
                         </div>
                         <i class="fa-solid fa-pen text-secondary ms-2 d-none d-md-inline" style="cursor:pointer; font-size:0.8rem;" onclick="editTripName('${item.tripId}')" title="Modifica Nome"></i>
                     </td>
@@ -518,7 +464,6 @@
             if(it) { if(!it.values) it.values={}; it.values[cid]=parseFloat(val)||0; saveData(); renderTrip(); }
         };
 
-        // --- UTILS ---
         window.renderDatabase = function(f="") {
             const tb = document.querySelector('#table-db tbody'); tb.innerHTML='';
             let l = window.appData.soci;
@@ -535,7 +480,7 @@
             if(i){
                 window.appData.trasferta.push({tripId:Date.now()+Math.random(), refId:rid, nome:i.nome, cognome:i.cognome, note:"", values:{}, paid:false}); 
                 saveData(); renderAll();
-                if(window.innerWidth <= 991) switchMobileView('trip'); // Auto switch on mobile
+                if(window.innerWidth <= 991) switchMobileView('trip');
             } 
         };
         
@@ -551,26 +496,24 @@
         
         window.updateTripNameUI = function() { const t=window.appData.currentTripName||"Trasferta"; document.getElementById('label-trip-header').innerText=`2. ${t.toUpperCase()}`; const d=document.getElementById('active-trip-name'); if(window.appData.currentTripName){d.style.display='block';d.innerHTML=`<div class="d-flex justify-content-between"><span>Attiva: <strong>"${t}"</strong></span><button class="btn btn-sm btn-outline-dark border-0" onclick="renameCurrentTrip()"><i class="fa-solid fa-pen"></i></button></div>`;}else{d.style.display='none';}};
         window.renameCurrentTrip = function() { const n=prompt("Nome:", window.appData.currentTripName||""); if(n){ window.appData.currentTripName=n; saveData(); updateTripNameUI(); } };
-        
-        window.editTripName = function(id) { 
-            const t=window.appData.trasferta.find(x=>String(x.tripId)===String(id)); 
-            if(t){ 
-                const n=prompt("Modifica nome:", t.cognome+" "+t.nome); 
-                if(n){ 
-                    const p=n.split(" "); 
-                    if(p.length > 0) {
-                        t.cognome=p[0]; t.nome=p.slice(1).join(" "); saveData(); renderTrip(); 
-                    }
-                } 
-            } 
-        };
+        window.editTripName = function(id) { const t=window.appData.trasferta.find(x=>String(x.tripId)===String(id)); if(t){ const n=prompt("Nome:",t.cognome+" "+t.nome); if(n){ const p=n.split(" "); t.cognome=p[0]; t.nome=p.slice(1).join(" "); saveData(); renderTrip(); } } };
         window.addTripNote = function(id) { const t=window.appData.trasferta.find(x=>String(x.tripId)===String(id)); if(t){ const n=prompt("Nota:",t.note); if(n!==null){ t.note=n; saveData(); renderTrip(); } } };
         window.removeFromTrip = function(id) { 
             const item = window.appData.trasferta.find(x => String(x.tripId) === String(id));
-            const name = item ? (item.cognome + ' ' + item.nome) : 'questo partecipante';
-            if(confirm(`Rimuovere "${name}"?`)) { window.appData.trasferta=window.appData.trasferta.filter(x=>String(x.tripId)!==String(id)); saveData(); renderAll(); }
+            const name = item ? `${item.cognome} ${item.nome}` : 'questo partecipante';
+            if(confirm(`Sei sicuro di voler rimuovere "${name}" dalla trasferta attuale?`)) { 
+                window.appData.trasferta=window.appData.trasferta.filter(x=>String(x.tripId)!==String(id)); saveData(); renderAll(); 
+            }
         };
+        window.clearTrip = function() { if(confirm("Svuotare tutto?")) { window.appData.trasferta=[]; window.appData.currentTripName=null; window.appData.currentArchiveId=null; saveData(); renderAll(); } };
+        window.toggleSection = function(id) { const e=document.getElementById(id); e.style.display=e.style.display==='none'?'block':'none'; };
         
+        window.deleteFromArchive = function(id) { if(confirm("Eliminare archivio?")) { window.appData.archivioTrasferte=window.appData.archivioTrasferte.filter(t=>String(t.id)!==String(id)); saveData(); renderArchiveList(); }};
+        window.importLogo = function(i) { const f=i.files[0]; if(f){const r=new FileReader(); r.onload=e=>{window.appData.customLogo=e.target.result; document.getElementById('logo-preview').src=e.target.result; document.getElementById('logo-preview').style.display='block'; saveData();}; r.readAsDataURL(f);} };
+        window.exportData = function() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(window.appData)); a.download="Backup.json"; document.body.appendChild(a); a.click(); a.remove(); };
+        window.importData = function(i) { const f=i.files[0]; if(f){const r=new FileReader();r.onload=e=>{try{window.appData=JSON.parse(e.target.result);saveData();renderAll();alert("OK");}catch(x){alert("Err");}};r.readAsText(f);i.value='';} };
+
+        // Save Trip Function
         window.saveTripToArchive = function() {
             if(!window.appData.trasferta.length) { alert("Vuoto"); return; }
             const payload = { data: JSON.parse(JSON.stringify(window.appData.trasferta)), columns: JSON.parse(JSON.stringify(window.appData.columns)) };
@@ -590,6 +533,7 @@
             window.appData.archivioTrasferte.push({ id: Date.now().toString(), name: name, date: new Date().toLocaleDateString(), count: window.appData.trasferta.length, data: payload.data, columns: payload.columns });
             alert("Archiviata!"); window.appData.trasferta=[]; window.appData.currentTripName=null; window.appData.currentArchiveId=null; saveData(); renderAll();
         };
+
         window.loadTripFromArchive = function(id) {
             if(window.appData.trasferta.length && !confirm("Sovrascrivere?")) return;
             const trip = window.appData.archivioTrasferte.find(t => String(t.id) === String(id));
@@ -602,6 +546,7 @@
                 saveData(); renderAll();
             }
         };
+
         window.renderArchiveList = function() {
             const tb = document.getElementById('archive-list-body'); tb.innerHTML='';
             const list = window.appData.archivioTrasferte || [];
@@ -610,71 +555,78 @@
                 tb.innerHTML += `<tr><td class="fw-bold">${t.name}</td><td><small>${t.date}</small></td><td>${t.count}</td><td class="text-end"><button class="btn btn-sm btn-primary" onclick="loadTripFromArchive('${t.id}')" data-bs-dismiss="modal">Apri</button> <button class="btn btn-sm btn-outline-danger" onclick="deleteFromArchive('${t.id}')">X</button></td></tr>`;
             });
         };
-        window.deleteFromArchive = function(id) { if(confirm("Eliminare?")) { window.appData.archivioTrasferte=window.appData.archivioTrasferte.filter(t=>String(t.id)!==String(id)); saveData(); renderArchiveList(); }};
-        window.clearTrip = function() { if(confirm("Svuotare tutto?")) { window.appData.trasferta=[]; window.appData.currentTripName=null; window.appData.currentArchiveId=null; saveData(); renderAll(); } };
-        window.toggleSection = function(id) { const e=document.getElementById(id); e.style.display=e.style.display==='none'?'block':'none'; };
 
-        window.importLogo = function(i) { const f=i.files[0]; if(f){const r=new FileReader(); r.onload=e=>{window.appData.customLogo=e.target.result; document.getElementById('logo-preview').src=e.target.result; document.getElementById('logo-preview').style.display='block'; saveData();}; r.readAsDataURL(f);} };
-        window.exportData = function() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(window.appData)); a.download="Backup.json"; document.body.appendChild(a); a.click(); a.remove(); };
-        window.importData = function(i) { const f=i.files[0]; if(f){const r=new FileReader();r.onload=e=>{try{window.appData=JSON.parse(e.target.result);saveData();renderAll();alert("OK");}catch(x){alert("Err");}};r.readAsText(f);i.value='';} };
-
-        // PRINT PDF
+        // PRINT PDF FIXED
         window.printTripPDF = function() {
             if(!window.appData.trasferta.length) { alert("Vuoto"); return; }
             const activeCols = window.appData.columns.filter(c => c.enabled);
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            if(window.appData.customLogo) try { doc.addImage(window.appData.customLogo, 'PNG', 10, 8, 28, 28); } catch(e){}
-            
-            doc.setFontSize(22); doc.setTextColor(18,47,103); doc.setFont("helvetica","bold");
-            doc.text("CLUB NAPOLI PARTENOPEI MODENA", window.appData.customLogo?45:14, 20);
-            doc.setFontSize(12); doc.setTextColor(0); doc.setFont("helvetica","normal");
-            doc.text(`Lista: ${window.appData.currentTripName||'Trasferta'} - ${new Date().toLocaleDateString()}`, window.appData.customLogo?45:14, 28);
+            if(!activeCols.length) { alert("Attiva almeno un tab"); return; }
 
-            let headers = ["#", "Nominativo"];
-            activeCols.forEach(c => headers.push(c.name));
-            headers.push("Tot.");
-            headers.push("Stato");
-
-            let rows = [];
-            let grandTotal = 0;
-            let totalPaid = 0;
-
-            let list = [...window.appData.trasferta].sort((a,b)=>(a.cognome||'').localeCompare(b.cognome||''));
-            list.forEach((item, i) => {
-                let rData = [i+1, `${item.cognome} ${item.nome}${item.note?' ('+item.note+')':''}`];
-                let rTot = 0;
-                activeCols.forEach(c => {
-                    const val = parseFloat(item.values?.[c.id])||0;
-                    rData.push(`€ ${val.toFixed(2)}`);
-                    rTot += val;
-                });
-                grandTotal += rTot;
-                if(item.paid) totalPaid += rTot;
-                rData.push(`€ ${rTot.toFixed(2)}`);
-                rData.push(item.paid ? "PAGATO" : "-");
-                rows.push(rData);
-            });
-
-            doc.autoTable({
-                head: [headers], body: rows, startY: 40, theme: 'grid',
-                headStyles: { fillColor: [18, 47, 103] },
-                styles: { fontSize: parseInt(document.getElementById('pdfFontSize').value)||10 },
-                didParseCell: function(data) {
-                    if (data.section === 'body' && data.row.cells[data.row.cells.length-1].raw === "PAGATO") {
-                        data.cell.styles.fillColor = [209, 231, 221];
-                    }
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                if(window.appData.customLogo) {
+                    try { doc.addImage(window.appData.customLogo, 'PNG', 10, 8, 28, 28); } 
+                    catch(e) { console.error("Logo Error:", e); }
                 }
-            });
+                
+                doc.setFontSize(22); doc.setTextColor(18,47,103); doc.setFont("helvetica","bold");
+                doc.text("CLUB NAPOLI PARTENOPEI MODENA", window.appData.customLogo?45:14, 20);
+                doc.setFontSize(12); doc.setTextColor(0); doc.setFont("helvetica","normal");
+                doc.text(`Lista: ${window.appData.currentTripName||'Trasferta'} - ${new Date().toLocaleDateString()}`, window.appData.customLogo?45:14, 28);
 
-            let finalY = doc.lastAutoTable.finalY + 10;
-            doc.setFontSize(10);
-            doc.text(`DA RISCUOTERE: € ${(grandTotal - totalPaid).toFixed(2)}`, 14, finalY);
-            doc.text(`INCASSATO: € ${totalPaid.toFixed(2)}`, 70, finalY);
-            doc.setFontSize(14); doc.setTextColor(25, 135, 84);
-            doc.text(`TOTALE GENERALE: € ${grandTotal.toFixed(2)}`, 140, finalY);
-            
-            window.open(doc.output('bloburl'), '_blank');
+                let headers = ["#", "Nominativo"];
+                activeCols.forEach(c => headers.push(c.name));
+                headers.push("Tot.");
+                headers.push("Stato");
+
+                let rows = [];
+                let grandTotal = 0;
+                let totalPaid = 0;
+
+                let list = [...window.appData.trasferta].sort((a,b)=>(a.cognome||'').localeCompare(b.cognome||''));
+                list.forEach((item, i) => {
+                    let rData = [i+1, `${item.cognome} ${item.nome}${item.note?' ('+item.note+')':''}`];
+                    let rTot = 0;
+                    activeCols.forEach(c => {
+                        const val = parseFloat(item.values?.[c.id])||0;
+                        rData.push(`€ ${val.toFixed(2)}`);
+                        rTot += val;
+                    });
+                    grandTotal += rTot;
+                    if(item.paid) totalPaid += rTot;
+                    rData.push(`€ ${rTot.toFixed(2)}`);
+                    rData.push(item.paid ? "PAGATO" : "-");
+                    rows.push(rData);
+                });
+
+                doc.autoTable({
+                    head: [headers], body: rows, startY: 40, theme: 'grid',
+                    headStyles: { fillColor: [18, 47, 103] },
+                    styles: { fontSize: parseInt(document.getElementById('pdfFontSize').value)||10 },
+                    // CORREZIONE ERRORE "raw"
+                    didParseCell: function(data) {
+                        if (data.section === 'body') {
+                            const rawRow = data.row.raw;
+                            if (Array.isArray(rawRow) && rawRow[rawRow.length - 1] === "PAGATO") {
+                                data.cell.styles.fillColor = [209, 231, 221];
+                            }
+                        }
+                    }
+                });
+
+                let finalY = doc.lastAutoTable.finalY + 10;
+                doc.setFontSize(10);
+                doc.text(`DA RISCUOTERE: € ${(grandTotal - totalPaid).toFixed(2)}`, 14, finalY);
+                doc.text(`INCASSATO: € ${totalPaid.toFixed(2)}`, 70, finalY);
+                doc.setFontSize(14); doc.setTextColor(25, 135, 84);
+                doc.text(`TOTALE GENERALE: € ${grandTotal.toFixed(2)}`, 140, finalY);
+                
+                window.open(doc.output('bloburl'), '_blank');
+            } catch(e) {
+                alert("Errore PDF: " + e.message);
+            }
         };
     </script>
 </body>
