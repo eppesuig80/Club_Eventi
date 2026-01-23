@@ -217,6 +217,7 @@
         </div>
     </div>
 
+    <!-- MOBILE NAV -->
     <div class="mobile-nav">
         <button class="nav-btn" id="nav-btn-db" onclick="switchMobileView('db')"><i class="fa-solid fa-users"></i> DATABASE</button>
         <button class="nav-btn active" id="nav-btn-trip" onclick="switchMobileView('trip')"><i class="fa-solid fa-list-check"></i> TRASFERTA</button>
@@ -496,7 +497,11 @@
         
         window.updateTripNameUI = function() { const t=window.appData.currentTripName||"Trasferta"; document.getElementById('label-trip-header').innerText=`2. ${t.toUpperCase()}`; const d=document.getElementById('active-trip-name'); if(window.appData.currentTripName){d.style.display='block';d.innerHTML=`<div class="d-flex justify-content-between"><span>Attiva: <strong>"${t}"</strong></span><button class="btn btn-sm btn-outline-dark border-0" onclick="renameCurrentTrip()"><i class="fa-solid fa-pen"></i></button></div>`;}else{d.style.display='none';}};
         window.renameCurrentTrip = function() { const n=prompt("Nome:", window.appData.currentTripName||""); if(n){ window.appData.currentTripName=n; saveData(); updateTripNameUI(); } };
-        window.editTripName = function(id) { const t=window.appData.trasferta.find(x=>String(x.tripId)===String(id)); if(t){ const n=prompt("Nome:",t.cognome+" "+t.nome); if(n){ const p=n.split(" "); t.cognome=p[0]; t.nome=p.slice(1).join(" "); saveData(); renderTrip(); } } };
+        
+        window.editTripName = function(id) { 
+            const t=window.appData.trasferta.find(x=>String(x.tripId)===String(id)); 
+            if(t){ const n=prompt("Modifica nome:", t.cognome+" "+t.nome); if(n){ const p=n.split(" "); if(p.length>0){t.cognome=p[0]; t.nome=p.slice(1).join(" "); saveData(); renderTrip(); }}} 
+        };
         window.addTripNote = function(id) { const t=window.appData.trasferta.find(x=>String(x.tripId)===String(id)); if(t){ const n=prompt("Nota:",t.note); if(n!==null){ t.note=n; saveData(); renderTrip(); } } };
         window.removeFromTrip = function(id) { 
             const item = window.appData.trasferta.find(x => String(x.tripId) === String(id));
@@ -505,6 +510,7 @@
                 window.appData.trasferta=window.appData.trasferta.filter(x=>String(x.tripId)!==String(id)); saveData(); renderAll(); 
             }
         };
+
         window.clearTrip = function() { if(confirm("Svuotare tutto?")) { window.appData.trasferta=[]; window.appData.currentTripName=null; window.appData.currentArchiveId=null; saveData(); renderAll(); } };
         window.toggleSection = function(id) { const e=document.getElementById(id); e.style.display=e.style.display==='none'?'block':'none'; };
         
@@ -513,7 +519,6 @@
         window.exportData = function() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(window.appData)); a.download="Backup.json"; document.body.appendChild(a); a.click(); a.remove(); };
         window.importData = function(i) { const f=i.files[0]; if(f){const r=new FileReader();r.onload=e=>{try{window.appData=JSON.parse(e.target.result);saveData();renderAll();alert("OK");}catch(x){alert("Err");}};r.readAsText(f);i.value='';} };
 
-        // Save Trip Function
         window.saveTripToArchive = function() {
             if(!window.appData.trasferta.length) { alert("Vuoto"); return; }
             const payload = { data: JSON.parse(JSON.stringify(window.appData.trasferta)), columns: JSON.parse(JSON.stringify(window.appData.columns)) };
@@ -533,7 +538,6 @@
             window.appData.archivioTrasferte.push({ id: Date.now().toString(), name: name, date: new Date().toLocaleDateString(), count: window.appData.trasferta.length, data: payload.data, columns: payload.columns });
             alert("Archiviata!"); window.appData.trasferta=[]; window.appData.currentTripName=null; window.appData.currentArchiveId=null; saveData(); renderAll();
         };
-
         window.loadTripFromArchive = function(id) {
             if(window.appData.trasferta.length && !confirm("Sovrascrivere?")) return;
             const trip = window.appData.archivioTrasferte.find(t => String(t.id) === String(id));
@@ -546,7 +550,6 @@
                 saveData(); renderAll();
             }
         };
-
         window.renderArchiveList = function() {
             const tb = document.getElementById('archive-list-body'); tb.innerHTML='';
             const list = window.appData.archivioTrasferte || [];
@@ -556,7 +559,7 @@
             });
         };
 
-        // PRINT PDF FIXED
+        // PRINT PDF MODIFIED
         window.printTripPDF = function() {
             if(!window.appData.trasferta.length) { alert("Vuoto"); return; }
             const activeCols = window.appData.columns.filter(c => c.enabled);
@@ -605,12 +608,23 @@
                     head: [headers], body: rows, startY: 40, theme: 'grid',
                     headStyles: { fillColor: [18, 47, 103] },
                     styles: { fontSize: parseInt(document.getElementById('pdfFontSize').value)||10 },
-                    // CORREZIONE ERRORE "raw"
-                    didParseCell: function(data) {
+                    
+                    // CUSTOM DRAW: STRIKETHROUGH FOR PAID (EXCLUDING LAST COLUMN)
+                    didDrawCell: function(data) {
                         if (data.section === 'body') {
                             const rawRow = data.row.raw;
-                            if (Array.isArray(rawRow) && rawRow[rawRow.length - 1] === "PAGATO") {
-                                data.cell.styles.fillColor = [209, 231, 221];
+                            const isPaid = rawRow[rawRow.length - 1] === "PAGATO";
+                            
+                            // Calculate index of the last column
+                            const lastColumnIndex = data.table.columns.length - 1;
+
+                            // Draw line ONLY if paid AND NOT last column
+                            if (isPaid && data.column.index !== lastColumnIndex) {
+                                const doc = data.doc;
+                                doc.setDrawColor(0, 0, 0); 
+                                doc.setLineWidth(0.3); 
+                                const lineY = data.cell.y + (data.cell.height / 2);
+                                doc.line(data.cell.x, lineY, data.cell.x + data.cell.width, lineY);
                             }
                         }
                     }
@@ -618,6 +632,7 @@
 
                 let finalY = doc.lastAutoTable.finalY + 10;
                 doc.setFontSize(10);
+                doc.setTextColor(0);
                 doc.text(`DA RISCUOTERE: € ${(grandTotal - totalPaid).toFixed(2)}`, 14, finalY);
                 doc.text(`INCASSATO: € ${totalPaid.toFixed(2)}`, 70, finalY);
                 doc.setFontSize(14); doc.setTextColor(25, 135, 84);
