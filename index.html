@@ -31,6 +31,16 @@
         .trip-input { width: 70px; text-align: right; border: 1px solid #ced4da; border-radius: 4px; padding: 4px; font-weight: bold; font-size: 0.85rem; }
         .trip-input:focus { border-color: var(--napoli-sky); outline: none; background-color: #f0f8ff; }
 
+        /* MODIFICA 1: Rimuove le freccette su/giù dagli input numerici */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
         .table { font-size: 0.9rem; }
         .table td, .table th { vertical-align: middle; }
         .total-cell { font-weight: bold; color: #198754; font-family: 'Consolas', monospace; }
@@ -201,7 +211,10 @@
                     </div>
                     
                     <div class="card-footer bg-light">
-                        <div class="footer-breakdown" id="footer-totals-container"></div>
+                        <!-- RIEPILOGO FINANZIARIO -->
+                        <div class="footer-breakdown" id="footer-totals-container">
+                            <!-- Generato via JS -->
+                        </div>
 
                         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                             <button class="btn btn-success btn-sm flex-grow-1 flex-md-grow-0" onclick="saveTripToArchive()"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
@@ -247,14 +260,14 @@
 
     <script>
         const STORAGE_KEY = 'clubNapoliData';
-        const DEFAULT_COLS = [
+        const DEFAULT_COLS =[
             { id: 'col_bus', name: 'Bus', enabled: false },
             { id: 'col_ticket', name: 'Biglietto', enabled: false },
             { id: 'col_extra', name: 'T-shirt', enabled: false }
         ];
 
         window.appData = { 
-            soci: [], trasferta: [], archivioTrasferte: [], customLogo: null, 
+            soci: [], trasferta: [], archivioTrasferte:[], customLogo: null, 
             currentTripName: null, currentArchiveId: null,
             columns: JSON.parse(JSON.stringify(DEFAULT_COLS))
         };
@@ -295,9 +308,9 @@
                 }
             } catch(e) { console.error("Err Load:", e); }
 
-            if(!Array.isArray(window.appData.soci)) window.appData.soci = [];
-            if(!Array.isArray(window.appData.trasferta)) window.appData.trasferta = [];
-            if(!Array.isArray(window.appData.archivioTrasferte)) window.appData.archivioTrasferte = [];
+            if(!Array.isArray(window.appData.soci)) window.appData.soci =[];
+            if(!Array.isArray(window.appData.trasferta)) window.appData.trasferta =[];
+            if(!Array.isArray(window.appData.archivioTrasferte)) window.appData.archivioTrasferte =[];
             
             if(window.appData.customLogo) {
                 const img = document.getElementById('logo-preview');
@@ -327,6 +340,7 @@
 
         function getColColor(index) { return `col-color-${index % 7}`; }
 
+        // MODIFICA 2: Aggiunta opzione "X Tutti" nelle colonne
         function renderDynamicHeader() {
             const container = document.getElementById('dynamic-toggles');
             const headerRow = document.getElementById('trip-header-row');
@@ -345,14 +359,31 @@
 
                 if(col.enabled) {
                     const th = document.createElement('th');
-                    th.width = "70";
-                    th.className = `text-center ${colorClass}`;
-                    th.innerText = `${col.name} €`;
+                    th.width = "85";
+                    th.className = `text-center align-middle ${colorClass}`;
+                    th.innerHTML = `
+                        <div class="mb-1">${col.name} €</div>
+                        <input type="number" class="form-control form-control-sm text-center p-0 mx-auto" style="width: 65px; font-size: 0.75rem; line-height: 1.2;" placeholder="X Tutti" onchange="applyToAll('${col.id}', this.value)" title="Applica a tutti">
+                    `;
                     headerRow.appendChild(th);
                 }
             });
             headerRow.innerHTML += '<th>Tot.</th><th width="100">Pag./Azioni</th>';
         }
+
+        // Funzione per applicare l'importo a tutti
+        window.applyToAll = function(colId, val) {
+            if (val === '') return; // Se viene solo svuotato il campo non fa niente
+            const amount = parseFloat(val) || 0;
+            if (confirm(`Confermi di voler impostare l'importo di € ${amount} per tutti in questa colonna?`)) {
+                window.appData.trasferta.forEach(t => {
+                    if(!t.values) t.values = {};
+                    t.values[colId] = amount;
+                });
+                saveData(); 
+                renderTrip();
+            }
+        };
 
         window.addNewColumn = function() {
             const name = prompt("Nome nuovo Tab:");
@@ -390,7 +421,7 @@
             const tbody = document.querySelector('#table-trip tbody');
             tbody.innerHTML = '';
 
-            let list = [...window.appData.trasferta];
+            let list =[...window.appData.trasferta];
             list.sort((a,b) => (a.cognome||'').localeCompare(b.cognome||''));
 
             let totalExpected = 0; 
@@ -445,14 +476,31 @@
                 tbody.appendChild(tr);
             });
 
-            const totalOutstanding = totalExpected - totalReceived;
+            // AGGIORNA FOOTER: TOTALI PER COLONNA + TOTALE GENERALE
             const fContainer = document.getElementById('footer-totals-container');
+            let footerHtml = '';
+
+            let colTotals = {};
+            window.appData.columns.forEach(c => colTotals[c.id] = 0);
             
-            fContainer.innerHTML = `
-                <span class="footer-val text-danger">DA RISCUOTERE: € ${totalOutstanding.toFixed(2)}</span>
-                <span class="footer-val text-success">INCASSATO: € ${totalReceived.toFixed(2)}</span>
-                <span class="footer-val text-dark">TOTALE: € ${totalExpected.toFixed(2)}</span>
-            `;
+            list.forEach(item => {
+                 window.appData.columns.forEach(c => {
+                    colTotals[c.id] += (parseFloat(item.values?.[c.id])||0);
+                 });
+            });
+
+            // Totali Colonne
+            window.appData.columns.forEach((col, idx) => {
+                if(col.enabled) {
+                    const colorClass = getColColor(idx);
+                    footerHtml += `<div class="col-total-item ${colorClass}" style="margin-right:10px;">${col.name}: € ${colTotals[col.id].toFixed(2)}</div>`;
+                }
+            });
+            
+            // Totale Generale
+            footerHtml += `<div class="footer-item total-gen">TOTALE: € ${totalExpected.toFixed(2)}</div>`;
+            
+            fContainer.innerHTML = footerHtml;
         };
 
         window.togglePaid = function(tripId) {
@@ -497,11 +545,7 @@
         
         window.updateTripNameUI = function() { const t=window.appData.currentTripName||"Trasferta"; document.getElementById('label-trip-header').innerText=`2. ${t.toUpperCase()}`; const d=document.getElementById('active-trip-name'); if(window.appData.currentTripName){d.style.display='block';d.innerHTML=`<div class="d-flex justify-content-between"><span>Attiva: <strong>"${t}"</strong></span><button class="btn btn-sm btn-outline-dark border-0" onclick="renameCurrentTrip()"><i class="fa-solid fa-pen"></i></button></div>`;}else{d.style.display='none';}};
         window.renameCurrentTrip = function() { const n=prompt("Nome:", window.appData.currentTripName||""); if(n){ window.appData.currentTripName=n; saveData(); updateTripNameUI(); } };
-        
-        window.editTripName = function(id) { 
-            const t=window.appData.trasferta.find(x=>String(x.tripId)===String(id)); 
-            if(t){ const n=prompt("Modifica nome:", t.cognome+" "+t.nome); if(n){ const p=n.split(" "); if(p.length>0){t.cognome=p[0]; t.nome=p.slice(1).join(" "); saveData(); renderTrip(); }}} 
-        };
+        window.editTripName = function(id) { const t=window.appData.trasferta.find(x=>String(x.tripId)===String(id)); if(t){ const n=prompt("Modifica nome:", t.cognome+" "+t.nome); if(n){ const p=n.split(" "); if(p.length>0){t.cognome=p[0]; t.nome=p.slice(1).join(" "); saveData(); renderTrip(); }}} };
         window.addTripNote = function(id) { const t=window.appData.trasferta.find(x=>String(x.tripId)===String(id)); if(t){ const n=prompt("Nota:",t.note); if(n!==null){ t.note=n; saveData(); renderTrip(); } } };
         window.removeFromTrip = function(id) { 
             const item = window.appData.trasferta.find(x => String(x.tripId) === String(id));
@@ -510,7 +554,6 @@
                 window.appData.trasferta=window.appData.trasferta.filter(x=>String(x.tripId)!==String(id)); saveData(); renderAll(); 
             }
         };
-
         window.clearTrip = function() { if(confirm("Svuotare tutto?")) { window.appData.trasferta=[]; window.appData.currentTripName=null; window.appData.currentArchiveId=null; saveData(); renderAll(); } };
         window.toggleSection = function(id) { const e=document.getElementById(id); e.style.display=e.style.display==='none'?'block':'none'; };
         
@@ -552,14 +595,14 @@
         };
         window.renderArchiveList = function() {
             const tb = document.getElementById('archive-list-body'); tb.innerHTML='';
-            const list = window.appData.archivioTrasferte || [];
+            const list = window.appData.archivioTrasferte ||[];
             document.getElementById('archive-empty-msg').style.display = list.length ? 'none' : 'block';
             list.sort((a,b) => b.id - a.id).forEach(t => {
                 tb.innerHTML += `<tr><td class="fw-bold">${t.name}</td><td><small>${t.date}</small></td><td>${t.count}</td><td class="text-end"><button class="btn btn-sm btn-primary" onclick="loadTripFromArchive('${t.id}')" data-bs-dismiss="modal">Apri</button> <button class="btn btn-sm btn-outline-danger" onclick="deleteFromArchive('${t.id}')">X</button></td></tr>`;
             });
         };
 
-        // PRINT PDF MODIFIED
+        // PRINT PDF: STRIKETHROUGH FOR PAID (EXCLUDING LAST COLUMN)
         window.printTripPDF = function() {
             if(!window.appData.trasferta.length) { alert("Vuoto"); return; }
             const activeCols = window.appData.columns.filter(c => c.enabled);
@@ -579,28 +622,27 @@
                 doc.setFontSize(12); doc.setTextColor(0); doc.setFont("helvetica","normal");
                 doc.text(`Lista: ${window.appData.currentTripName||'Trasferta'} - ${new Date().toLocaleDateString()}`, window.appData.customLogo?45:14, 28);
 
-                let headers = ["#", "Nominativo"];
+                let headers =["#", "Nominativo"];
                 activeCols.forEach(c => headers.push(c.name));
                 headers.push("Tot.");
-                headers.push("Stato");
 
-                let rows = [];
+                let rows =[];
                 let grandTotal = 0;
-                let totalPaid = 0;
+                let colTotals = {}; 
+                activeCols.forEach(c => colTotals[c.id] = 0);
 
-                let list = [...window.appData.trasferta].sort((a,b)=>(a.cognome||'').localeCompare(b.cognome||''));
+                let list =[...window.appData.trasferta].sort((a,b)=>(a.cognome||'').localeCompare(b.cognome||''));
                 list.forEach((item, i) => {
-                    let rData = [i+1, `${item.cognome} ${item.nome}${item.note?' ('+item.note+')':''}`];
+                    let rData =[i+1, `${item.cognome} ${item.nome}${item.note?' ('+item.note+')':''}`];
                     let rTot = 0;
                     activeCols.forEach(c => {
                         const val = parseFloat(item.values?.[c.id])||0;
                         rData.push(`€ ${val.toFixed(2)}`);
                         rTot += val;
+                        colTotals[c.id] += val;
                     });
                     grandTotal += rTot;
-                    if(item.paid) totalPaid += rTot;
                     rData.push(`€ ${rTot.toFixed(2)}`);
-                    rData.push(item.paid ? "PAGATO" : "-");
                     rows.push(rData);
                 });
 
@@ -609,21 +651,16 @@
                     headStyles: { fillColor: [18, 47, 103] },
                     styles: { fontSize: parseInt(document.getElementById('pdfFontSize').value)||10 },
                     
-                    // CUSTOM DRAW: STRIKETHROUGH FOR PAID (EXCLUDING LAST COLUMN)
+                    // CUSTOM DRAW: STRIKETHROUGH (EXCLUDING LAST COLUMN)
                     didDrawCell: function(data) {
                         if (data.section === 'body') {
-                            const rawRow = data.row.raw;
-                            const isPaid = rawRow[rawRow.length - 1] === "PAGATO";
-                            
-                            // Calculate index of the last column
-                            const lastColumnIndex = data.table.columns.length - 1;
-
-                            // Draw line ONLY if paid AND NOT last column
-                            if (isPaid && data.column.index !== lastColumnIndex) {
+                            const item = list[data.row.index];
+                            if (item && item.paid) {
                                 const doc = data.doc;
                                 doc.setDrawColor(0, 0, 0); 
                                 doc.setLineWidth(0.3); 
                                 const lineY = data.cell.y + (data.cell.height / 2);
+                                // Draw full width line
                                 doc.line(data.cell.x, lineY, data.cell.x + data.cell.width, lineY);
                             }
                         }
@@ -633,10 +670,15 @@
                 let finalY = doc.lastAutoTable.finalY + 10;
                 doc.setFontSize(10);
                 doc.setTextColor(0);
-                doc.text(`DA RISCUOTERE: € ${(grandTotal - totalPaid).toFixed(2)}`, 14, finalY);
-                doc.text(`INCASSATO: € ${totalPaid.toFixed(2)}`, 70, finalY);
+                
+                // Add totals breakdown
+                let breakdownText = "";
+                activeCols.forEach(c => breakdownText += `${c.name}: €${colTotals[c.id].toFixed(2)}   `);
+                doc.text(breakdownText, 14, finalY);
+
+                finalY += 8;
                 doc.setFontSize(14); doc.setTextColor(25, 135, 84);
-                doc.text(`TOTALE GENERALE: € ${grandTotal.toFixed(2)}`, 140, finalY);
+                doc.text(`TOTALE GENERALE: € ${grandTotal.toFixed(2)}`, 14, finalY);
                 
                 window.open(doc.output('bloburl'), '_blank');
             } catch(e) {
