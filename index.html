@@ -258,6 +258,32 @@
         </div>
     </div>
 
+    <!-- SCRIPT FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // Le tue chiavi Firebase
+        const firebaseConfig = {
+          apiKey: "AIzaSyBB2vc_Jzben22RBr7j_2o0Ve4avvXNh_E",
+          authDomain: "clubnapolieventi.firebaseapp.com",
+          projectId: "clubnapolieventi",
+          storageBucket: "clubnapolieventi.firebasestorage.app",
+          messagingSenderId: "159519951379",
+          appId: "1:159519951379:web:de26c87dfbb713cf4c8de6"
+        };
+
+        // Inizializza l'app
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Riferimento al documento unico dell'app
+        window.cloudDocRef = doc(db, "databaseClub", "datiPartenopeiModena");
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.firebaseLoaded = true;
+    </script>
+
     <script>
         const STORAGE_KEY = 'clubNapoliData';
         const DEFAULT_COLS =[
@@ -296,18 +322,40 @@
             else { c.style.display = 'none'; b.innerHTML = '<i class="fa-solid fa-eye"></i>'; }
         };
 
-        function loadLocalData() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if(raw) {
-                    const parsed = JSON.parse(raw);
-                    window.appData = { ...window.appData, ...parsed };
-                    if(!window.appData.columns || window.appData.columns.length === 0) {
-                        window.appData.columns = JSON.parse(JSON.stringify(DEFAULT_COLS));
-                    }
-                }
-            } catch(e) { console.error("Err Load:", e); }
+        // NUOVA FUNZIONE ASINCRONA DI CARICAMENTO (Cloud + Locale)
+        async function loadLocalData() {
+            showStatus("Connessione Cloud...", "local");
+            
+            // Attende che Firebase sia inizializzato (massimo 5 secondi)
+            let retries = 10;
+            while(!window.firebaseLoaded && retries > 0) {
+                await new Promise(r => setTimeout(r, 500));
+                retries--;
+            }
 
+            try {
+                if (window.getDoc && window.cloudDocRef) {
+                    const docSnap = await window.getDoc(window.cloudDocRef);
+                    if (docSnap.exists()) {
+                        const cloudData = docSnap.data();
+                        window.appData = { ...window.appData, ...cloudData };
+                        showStatus("Cloud OK", "ok");
+                    } else {
+                        showStatus("Nuovo DB Cloud", "local");
+                        loadFallbackLocal();
+                    }
+                } else {
+                    loadFallbackLocal();
+                }
+            } catch(e) {
+                console.error("Errore Cloud Load:", e);
+                showStatus("Offline, uso locale", "err");
+                loadFallbackLocal();
+            }
+
+            if(!window.appData.columns || window.appData.columns.length === 0) {
+                window.appData.columns = JSON.parse(JSON.stringify(DEFAULT_COLS));
+            }
             if(!Array.isArray(window.appData.soci)) window.appData.soci =[];
             if(!Array.isArray(window.appData.trasferta)) window.appData.trasferta =[];
             if(!Array.isArray(window.appData.archivioTrasferte)) window.appData.archivioTrasferte =[];
@@ -320,16 +368,54 @@
             renderAll();
         }
 
-        window.saveData = function() {
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(window.appData)); showStatus("Salvato", "ok"); } 
-            catch(e) { showStatus("Errore", "err"); }
+        // Funzione di emergenza per leggere i vecchi dati salvati offline
+        function loadFallbackLocal() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if(raw) {
+                    const parsed = JSON.parse(raw);
+                    window.appData = { ...window.appData, ...parsed };
+                }
+            } catch(e) { console.error("Err Load Locale:", e); }
+        }
+
+        // NUOVA FUNZIONE ASINCRONA DI SALVATAGGIO (Locale + Cloud)
+        window.saveData = async function() {
+            // 1. Salva sempre in locale come backup veloce e offline
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(window.appData)); } catch(e) {}
+            
+            // 2. Salva sul Cloud Firebase
+            try {
+                if(window.setDoc && window.cloudDocRef) {
+                    showStatus("Salvataggio...", "local");
+                    await window.setDoc(window.cloudDocRef, window.appData);
+                    showStatus("Salvato Cloud", "ok");
+                } else {
+                    showStatus("Salvato Locale", "local");
+                }
+            } 
+            catch(e) { 
+                console.error("Errore salvataggio Cloud:", e);
+                showStatus("Errore Cloud", "err"); 
+            }
         };
 
+        // Funzione per l'indicatore di stato aggiornata per gestire meglio il cloud
         function showStatus(msg, type) {
             const el = document.getElementById('cloud-status');
             el.innerHTML = `<i class="fa-solid fa-check"></i> ${msg}`;
-            el.className = type === 'ok' ? 'status-ok' : 'status-err';
-            setTimeout(() => { el.innerHTML = `<i class="fa-solid fa-check"></i> Pronto`; el.className = 'status-local'; }, 1000);
+            
+            if(type === 'ok') el.className = 'status-ok';
+            else if(type === 'err') el.className = 'status-err';
+            else el.className = 'status-local';
+            
+            // Non resettare immediatamente se è uno stato di caricamento temporaneo
+            if(msg !== "Connessione Cloud..." && msg !== "Salvataggio...") {
+                setTimeout(() => { 
+                    el.innerHTML = `<i class="fa-solid fa-check"></i> Pronto`; 
+                    el.className = 'status-local'; 
+                }, 2000);
+            }
         }
 
         window.renderAll = function() {
@@ -648,7 +734,7 @@
 
                 doc.autoTable({
                     head: [headers], body: rows, startY: 40, theme: 'grid',
-                    headStyles: { fillColor: [18, 47, 103] },
+                    headStyles: { fillColor:[18, 47, 103] },
                     styles: { fontSize: parseInt(document.getElementById('pdfFontSize').value)||10 },
                     
                     // CUSTOM DRAW: STRIKETHROUGH (EXCLUDING LAST COLUMN)
