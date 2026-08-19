@@ -220,6 +220,10 @@
                             <button class="btn btn-success btn-sm flex-grow-1 flex-md-grow-0" onclick="saveTripToArchive()"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
                             <button class="btn btn-danger btn-sm" onclick="clearTrip()"><i class="fa-solid fa-trash"></i></button>
                             <div class="input-group input-group-sm" style="width:90px;"><span class="input-group-text p-1">Aa</span><input type="number" id="pdfFontSize" class="form-control text-center p-1" value="10"></div>
+                            <div class="form-check form-check-inline m-0 d-flex align-items-center">
+                                <input class="form-check-input me-1" type="checkbox" id="printFinalTotals" checked>
+                                <label class="form-check-label small fw-bold" for="printFinalTotals">Stampa totali finali</label>
+                            </div>
                             <button class="btn btn-primary fw-bold flex-grow-1 flex-md-grow-0" onclick="printTripPDF()">
                                 <i class="fa-solid fa-print"></i> PDF/STAMPA
                             </button>
@@ -806,19 +810,23 @@
                     }
                 });
 
-                let finalY = doc.lastAutoTable.finalY + 10;
-                doc.setFontSize(10);
-                doc.setTextColor(0);
-                
-                // Add totals breakdown
-                let breakdownText = "";
-                activeCols.forEach(c => breakdownText += `${c.name}: €${colTotals[c.id].toFixed(2)}   `);
-                doc.text(breakdownText, 14, finalY);
+                const printFinalTotals = document.getElementById('printFinalTotals')?.checked !== false;
 
-                finalY += 8;
-                doc.setFontSize(14); doc.setTextColor(25, 135, 84);
-                doc.text(`TOTALE GENERALE: € ${grandTotal.toFixed(2)}`, 14, finalY);
-                
+                if (printFinalTotals) {
+                    let finalY = doc.lastAutoTable.finalY + 10;
+                    doc.setFontSize(10);
+                    doc.setTextColor(0);
+
+                    // Add totals breakdown
+                    let breakdownText = "";
+                    activeCols.forEach(c => breakdownText += `${c.name}: €${colTotals[c.id].toFixed(2)}   `);
+                    doc.text(breakdownText, 14, finalY);
+
+                    finalY += 8;
+                    doc.setFontSize(14); doc.setTextColor(25, 135, 84);
+                    doc.text(`TOTALE GENERALE: € ${grandTotal.toFixed(2)}`, 14, finalY);
+                }
+
                 // Apertura PDF compatibile con smartphone
                 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                 if (isMobile) {
