@@ -435,7 +435,13 @@
             try {
                 if(window.setDoc && window.cloudDocRef) {
                     showStatus("Salvataggio...", "local");
-                    await window.setDoc(window.cloudDocRef, window.appData);
+
+                    // Il logo resta salvato solo in locale:
+                    // viene escluso da Firestore per evitare il limite dimensione documento/campo.
+                    const cloudData = { ...window.appData };
+                    delete cloudData.customLogo;
+
+                    await window.setDoc(window.cloudDocRef, cloudData);
                     showStatus("Salvato Cloud", "ok");
                 } else {
                     showStatus("Salvato Locale", "local");
