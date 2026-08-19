@@ -819,7 +819,15 @@
                 doc.setFontSize(14); doc.setTextColor(25, 135, 84);
                 doc.text(`TOTALE GENERALE: € ${grandTotal.toFixed(2)}`, 14, finalY);
                 
-                window.open(doc.output('bloburl'), '_blank');
+                // Apertura PDF compatibile con smartphone
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    const safeName = (window.appData.currentTripName || 'Trasferta')
+                        .replace(/[^a-zA-Z0-9_-]/g, '_');
+                    doc.save(`${safeName}.pdf`);
+                } else {
+                    window.open(doc.output('bloburl'), '_blank');
+                }
             } catch(e) {
                 alert("Errore PDF: " + e.message);
             }
