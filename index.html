@@ -583,7 +583,7 @@
                     if(col.enabled) {
                         const val = parseFloat(item.values[col.id]) || 0;
                         rowTotal += val;
-                        cellsHtml += `<td class="text-center p-1"><input type="number" class="trip-input" step="0.5" value="${val===0?'':val}" placeholder="€" onchange="updateTripValue('${item.tripId}', '${col.id}', this.value)"></td>`;
+                        cellsHtml += `<td class="text-center p-1"><input type="text" inputmode="decimal" class="trip-input" value="${val===0?'':val}" placeholder="€" onfocus="this.select()" oninput="sanitizeAmountInput(this)" onblur="commitTripValue('${item.tripId}', '${col.id}', this)"></td>`;
                     }
                 });
                 
@@ -651,9 +651,50 @@
             if(item) { item.paid = !item.paid; saveData(); renderTrip(); }
         };
 
+        window.sanitizeAmountInput = function(input) {
+            let v = String(input.value || "");
+
+            // Consente solo cifre e un singolo separatore decimale.
+            v = v.replace(/[^\d.,]/g, "");
+            const firstSep = v.search(/[.,]/);
+
+            if(firstSep !== -1) {
+                const integerPart = v.slice(0, firstSep).replace(/[.,]/g, "");
+                const decimalPart = v.slice(firstSep + 1).replace(/[.,]/g, "");
+                v = integerPart + v[firstSep] + decimalPart;
+            }
+
+            input.value = v;
+        };
+
+        window.commitTripValue = function(tid, cid, input) {
+            const it = window.appData.trasferta.find(t => String(t.tripId) === String(tid));
+            if(!it) return;
+
+            if(!it.values) it.values = {};
+
+            let raw = String(input.value || "").trim().replace(",", ".");
+            let amount = raw === "" ? 0 : Number(raw);
+
+            if(!Number.isFinite(amount)) amount = 0;
+
+            it.values[cid] = amount;
+            input.value = amount === 0 ? "" : String(amount);
+
+            saveData();
+            renderTrip();
+        };
+
+        // Mantiene compatibilità con eventuali chiamate già presenti.
         window.updateTripValue = function(tid, cid, val) {
             const it = window.appData.trasferta.find(t=>String(t.tripId)===String(tid));
-            if(it) { if(!it.values) it.values={}; it.values[cid]=parseFloat(val)||0; saveData(); renderTrip(); }
+            if(it) {
+                if(!it.values) it.values={};
+                const amount = Number(String(val ?? "").replace(",", "."));
+                it.values[cid] = Number.isFinite(amount) ? amount : 0;
+                saveData();
+                renderTrip();
+            }
         };
 
         window.renderDatabase = function(f="") {
@@ -703,7 +744,114 @@
         window.deleteFromArchive = function(id) { if(confirm("Eliminare archivio?")) { window.appData.archivioTrasferte=window.appData.archivioTrasferte.filter(t=>String(t.id)!==String(id)); saveData(); renderArchiveList(); }};
         window.importLogo = function(i) { const f=i.files[0]; if(f){const r=new FileReader(); r.onload=e=>{window.appData.customLogo=e.target.result; document.getElementById('logo-preview').src=e.target.result; document.getElementById('logo-preview').style.display='block'; saveData();}; r.readAsDataURL(f);} };
         window.exportData = function() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(window.appData)); a.download="Backup.json"; document.body.appendChild(a); a.click(); a.remove(); };
-        window.importData = function(i) { const f=i.files[0]; if(f){const r=new FileReader();r.onload=e=>{try{window.appData=JSON.parse(e.target.result);saveData();renderAll();alert("OK");}catch(x){alert("Err");}};r.readAsText(f);i.value='';} };
+        window.importData = function(i) {
+            const f = i.files[0];
+            if(!f) return;
+
+            const r = new FileReader();
+            r.onload = async e => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+
+                    // Supporta sia backup completi { appData: {...} } sia JSON con array diretti.
+                    const source = parsed.appData || parsed;
+
+                    const incomingSoci = Array.isArray(source.soci) ? source.soci : [];
+                    const incomingAccompagnatori = Array.isArray(source.accompagnatori) ? source.accompagnatori : [];
+
+                    if(!incomingSoci.length && !incomingAccompagnatori.length) {
+                        alert("Il file JSON non contiene soci o accompagnatori da importare.");
+                        return;
+                    }
+
+                    if(!Array.isArray(window.appData.soci)) window.appData.soci = [];
+
+                    // Nel gestionale trasferte tutti i nominativi vengono resi disponibili
+                    // nello stesso Database Soci, mantenendo il tipo di origine.
+                    const incomingPeople = [
+                        ...incomingSoci.map(p => ({ ...p, tipoAnagrafica: p.tipoAnagrafica || "socio" })),
+                        ...incomingAccompagnatori.map(p => ({ ...p, tipoAnagrafica: p.tipoAnagrafica || "accompagnatore" }))
+                    ];
+
+                    const normalize = v => String(v ?? "").trim().toUpperCase();
+
+                    // Cerca prima per ID, poi per CF, infine per nome+cognome.
+                    const findExistingIndex = person => {
+                        const id = normalize(person.id);
+                        if(id) {
+                            const idx = window.appData.soci.findIndex(x => normalize(x.id) === id);
+                            if(idx !== -1) return idx;
+                        }
+
+                        const cf = normalize(person.cf);
+                        if(cf) {
+                            const idx = window.appData.soci.findIndex(x => normalize(x.cf) === cf);
+                            if(idx !== -1) return idx;
+                        }
+
+                        const nome = normalize(person.nome);
+                        const cognome = normalize(person.cognome);
+                        if(nome && cognome) {
+                            return window.appData.soci.findIndex(x =>
+                                normalize(x.nome) === nome &&
+                                normalize(x.cognome) === cognome
+                            );
+                        }
+
+                        return -1;
+                    };
+
+                    let added = 0;
+                    let updated = 0;
+                    let skipped = 0;
+
+                    incomingPeople.forEach(person => {
+                        if(!person || !person.nome || !person.cognome) {
+                            skipped++;
+                            return;
+                        }
+
+                        const idx = findExistingIndex(person);
+
+                        if(idx !== -1) {
+                            // Aggiorna i campi ricevuti senza eliminare eventuali campi già presenti.
+                            window.appData.soci[idx] = {
+                                ...window.appData.soci[idx],
+                                ...person
+                            };
+                            updated++;
+                        } else {
+                            const newPerson = { ...person };
+
+                            // Se il file non contiene un ID valido, ne crea uno nuovo.
+                            if(!newPerson.id) {
+                                newPerson.id = `${Date.now()}_${Math.random().toString(36).slice(2,10)}`;
+                            }
+
+                            window.appData.soci.push(newPerson);
+                            added++;
+                        }
+                    });
+
+                    await saveData();
+                    renderAll();
+
+                    alert(
+                        `Importazione completata.\n` +
+                        `Nuovi nominativi: ${added}\n` +
+                        `Aggiornati: ${updated}\n` +
+                        `Ignorati: ${skipped}`
+                    );
+
+                } catch(x) {
+                    console.error("Errore import JSON:", x);
+                    alert("Errore: file JSON non valido o non compatibile.");
+                }
+            };
+
+            r.readAsText(f);
+            i.value = '';
+        };
 
         window.saveTripToArchive = function() {
             if(!window.appData.trasferta.length) { alert("Vuoto"); return; }
