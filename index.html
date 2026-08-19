@@ -261,7 +261,7 @@
     <!-- SCRIPT FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         // Le tue chiavi Firebase
         const firebaseConfig = {
@@ -281,6 +281,7 @@
         window.cloudDocRef = doc(db, "databaseClub", "datiPartenopeiModena");
         window.setDoc = setDoc;
         window.getDoc = getDoc;
+        window.onSnapshot = onSnapshot;
         window.firebaseLoaded = true;
     </script>
 
@@ -366,6 +367,52 @@
                 img.style.display = 'block';
             }
             renderAll();
+            startRealtimeSync();
+        }
+
+        // SINCRONIZZAZIONE REALTIME FIRESTORE TRA TUTTI I DISPOSITIVI
+        let realtimeUnsubscribe = null;
+
+        function startRealtimeSync() {
+            if(realtimeUnsubscribe || !window.onSnapshot || !window.cloudDocRef) return;
+
+            realtimeUnsubscribe = window.onSnapshot(
+                window.cloudDocRef,
+                (docSnap) => {
+                    if(!docSnap.exists()) return;
+
+                    const cloudData = docSnap.data();
+                    window.appData = { ...window.appData, ...cloudData };
+
+                    if(!window.appData.columns || window.appData.columns.length === 0) {
+                        window.appData.columns = JSON.parse(JSON.stringify(DEFAULT_COLS));
+                    }
+                    if(!Array.isArray(window.appData.soci)) window.appData.soci = [];
+                    if(!Array.isArray(window.appData.trasferta)) window.appData.trasferta = [];
+                    if(!Array.isArray(window.appData.archivioTrasferte)) window.appData.archivioTrasferte = [];
+
+                    try {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(window.appData));
+                    } catch(e) {}
+
+                    if(window.appData.customLogo) {
+                        const img = document.getElementById('logo-preview');
+                        img.src = window.appData.customLogo;
+                        img.style.display = 'block';
+                    } else {
+                        const img = document.getElementById('logo-preview');
+                        img.src = '';
+                        img.style.display = 'none';
+                    }
+
+                    renderAll();
+                    showStatus("Aggiornato Cloud", "ok");
+                },
+                (error) => {
+                    console.error("Errore sincronizzazione realtime:", error);
+                    showStatus("Errore Sync Cloud", "err");
+                }
+            );
         }
 
         // Funzione di emergenza per leggere i vecchi dati salvati offline
