@@ -54,15 +54,23 @@
         
         .toggle-wrapper { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; background: rgba(255,255,255,0.15); padding: 5px 10px; border-radius: 8px; }
         .toggle-item { display: flex; align-items: center; margin-right: 10px; }
-        .columns-compact-btn { border: 1px solid #6c757d; color: white; background: #495057; border-radius: 7px; font-weight: 600; }
-        .columns-compact-btn:hover, .columns-compact-btn:focus { background: #343a40; color: white; }
-        .columns-compact-panel { display: none; background: #fff; border-bottom: 1px solid #dee2e6; padding: 12px; box-shadow: inset 0 -1px 0 rgba(0,0,0,0.03); }
+        .columns-compact-btn { border: 0; color: white; background: #4b5563; border-radius: 7px; font-weight: 600; padding: 5px 10px; box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+        .columns-compact-btn:hover, .columns-compact-btn:focus { background: #374151; color: white; }
+        .trip-active-toolbar { background: #d7f4fb; border-bottom: 1px solid #b9dfe8; padding: 7px 10px; }
+        .trip-archive-wrap { background: #fff; padding: 8px 10px; border-bottom: 1px solid #e5e7eb; }
+        .trip-archive-btn { width: 100%; background: #ffc107; border-color: #ffc107; color: #111827; font-weight: 800; }
+        .columns-compact-panel { display: none; background: #fff; border: 1px solid #d8dee6; border-radius: 12px; padding: 14px; margin: 10px; box-shadow: 0 12px 30px rgba(0,0,0,.20); position: relative; z-index: 30; }
         .columns-compact-panel.open { display: block; }
-        .columns-compact-panel #dynamic-toggles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
-        .columns-compact-panel .toggle-item { margin-right: 0; min-width: 0; }
-        .columns-compact-panel .toggle-item .form-check-label { color: #212529 !important; overflow: hidden; text-overflow: ellipsis; }
-        .columns-compact-actions { display: flex; gap: 8px; margin-top: 12px; }
-        .columns-compact-close { margin-top: 10px; }
+        .columns-panel-title { font-size: 1rem; font-weight: 800; color: #111827; }
+        .columns-compact-panel #dynamic-toggles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin-top: 8px; }
+        .columns-compact-panel .toggle-item { margin-right: 0; min-width: 0; padding: 1px 0; }
+        .columns-compact-panel .toggle-item .form-check-label { color: #212529 !important; overflow: hidden; text-overflow: ellipsis; font-size: .86rem !important; font-weight: 600 !important; }
+        .columns-compact-panel .edit-label-btn { color: #6c757d; margin-left: 5px; }
+        .columns-paid-item { display:flex; align-items:center; gap:7px; min-width:0; }
+        .columns-paid-item label { margin:0; font-size:.86rem; font-weight:600; color:#212529; }
+        .columns-compact-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .columns-compact-actions .btn { border-radius: 7px; min-height: 36px; }
+        .columns-compact-close { margin-top: 10px; min-height: 38px; border-radius: 7px; }
         
         .col-action-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); background: rgba(0,0,0,0.2); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
         .col-action-btn:hover { background: white; color: var(--napoli-blue); }
@@ -111,6 +119,11 @@
             .card-header { flex-direction: column; align-items: stretch; }
             .header-title-container { justify-content: center; margin-bottom: 8px; }
             .footer-breakdown { flex-direction: column; align-items: flex-start; }
+            #sec-trip .card { border-radius: 0; margin-bottom: 8px; box-shadow: none; }
+            .trip-active-toolbar { font-size: .8rem; }
+            .columns-compact-panel { margin: 8px 10px 10px; }
+            .columns-compact-panel #dynamic-toggles { gap: 11px 14px; }
+            .trip-archive-wrap { padding: 8px 10px; }
         }
         @media (min-width: 992px) { .section-view { display: block !important; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -195,34 +208,29 @@
                             <i class="fa-solid fa-pen edit-label-btn" onclick="renameCurrentTrip()" title="Rinomina"></i>
                             <div class="badge bg-white text-primary fs-6 ms-2" id="trip-count">0</div>
                         </div>
-                        
-                        <button class="btn btn-sm btn-warning text-dark fw-bold w-100 mt-2 mt-md-0 w-md-auto" data-bs-toggle="modal" data-bs-target="#archiveModal" onclick="renderArchiveList()">
-                            <i class="fa-solid fa-folder-open"></i> Archivio
-                        </button>
                     </div>
                     
                     <div class="card-body p-0">
-                        <div class="alert alert-info py-1 px-2 m-0 rounded-0 border-bottom fw-bold d-flex align-items-center justify-content-between gap-2" style="font-size: 0.8rem;">
+                        <div class="trip-active-toolbar fw-bold d-flex align-items-center justify-content-between gap-2">
                             <div id="active-trip-name" class="flex-grow-1" style="display:none;"></div>
                             <button type="button" class="btn btn-sm columns-compact-btn ms-auto" onclick="toggleColumnsCompactPanel()" aria-controls="columnsCompactPanel" aria-expanded="false">
                                 <i class="fa-solid fa-gear me-1"></i> Colonne
                             </button>
                         </div>
+                        <div class="trip-archive-wrap">
+                            <button class="btn btn-sm trip-archive-btn" data-bs-toggle="modal" data-bs-target="#archiveModal" onclick="renderArchiveList()">
+                                <i class="fa-solid fa-folder-open"></i> Archivio
+                            </button>
+                        </div>
                         <div id="columnsCompactPanel" class="columns-compact-panel">
                             <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="fw-bold">Colonne visibili</div>
+                                <div class="columns-panel-title">Colonne visibili</div>
                                 <button type="button" class="btn-close" aria-label="Chiudi" onclick="closeColumnsCompactPanel()"></button>
                             </div>
                             <div id="dynamic-toggles"></div>
-                            <div class="d-flex align-items-center justify-content-between mt-3" title="Mostra/Nascondi flag Pagato">
-                                <label class="form-check-label fw-bold" for="toggle-paid-visibility">Pagato</label>
-                                <div class="form-check form-switch m-0">
-                                    <input class="form-check-input" type="checkbox" id="toggle-paid-visibility" onchange="togglePaidVisibility()">
-                                </div>
-                            </div>
                             <div class="columns-compact-actions">
-                                <button type="button" class="btn btn-outline-primary btn-sm flex-fill fw-bold" onclick="addNewColumn()"><i class="fa-solid fa-plus me-1"></i> Nuovo tab</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold" onclick="removeColumn()"><i class="fa-solid fa-minus me-1"></i> Elimina tab</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm flex-fill fw-bold" onclick="addNewColumn()"><i class="fa-solid fa-circle-plus me-1"></i> Nuovo tab</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold" onclick="removeColumn()"><i class="fa-solid fa-circle-minus me-1"></i> Elimina tab</button>
                             </div>
                             <button type="button" class="btn btn-primary btn-sm w-100 fw-bold columns-compact-close" onclick="closeColumnsCompactPanel()">Chiudi</button>
                         </div>
@@ -573,8 +581,13 @@
                 }
             });
 
-            const paidVisibilityToggle = document.getElementById('toggle-paid-visibility');
-            if(paidVisibilityToggle) paidVisibilityToggle.checked = window.appData.showPaid !== false;
+            const paidDiv = document.createElement('div');
+            paidDiv.className = 'form-check form-switch m-0 d-flex align-items-center toggle-item columns-paid-item';
+            paidDiv.title = 'Mostra/Nascondi flag Pagato';
+            paidDiv.innerHTML = `
+                <input class="form-check-input" type="checkbox" id="toggle-paid-visibility" ${window.appData.showPaid !== false ? 'checked' : ''} onchange="togglePaidVisibility()">
+                <label class="form-check-label ms-1" for="toggle-paid-visibility">Pagato</label>`;
+            container.appendChild(paidDiv);
 
             const paidHeaderLabel = window.appData.showPaid !== false ? 'Pag./Azioni' : 'Azioni';
             headerRow.innerHTML += `<th>Tot.</th><th width="100">${paidHeaderLabel}</th>`;
