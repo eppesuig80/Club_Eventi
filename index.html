@@ -262,6 +262,25 @@
         </div>
     </div>
 
+    <!-- MODALE SCELTA TIPO TAB -->
+    <div class="modal fade" id="columnTypeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Tipo di Tab</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="fw-bold mb-3">Lo vuoi in € o Quantità?</div>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success fw-bold" id="column-type-euro">€ Euro</button>
+                        <button type="button" class="btn btn-primary fw-bold" id="column-type-quantity">Quantità</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- SCRIPT FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -292,9 +311,9 @@
     <script>
         const STORAGE_KEY = 'clubNapoliData';
         const DEFAULT_COLS =[
-            { id: 'col_bus', name: 'Bus', enabled: false },
-            { id: 'col_ticket', name: 'Biglietto', enabled: false },
-            { id: 'col_extra', name: 'T-shirt', enabled: false }
+            { id: 'col_bus', name: 'Bus', enabled: false, type: 'money' },
+            { id: 'col_ticket', name: 'Biglietto', enabled: false, type: 'money' },
+            { id: 'col_extra', name: 'T-shirt', enabled: false, type: 'money' }
         ];
 
         window.appData = { 
@@ -504,8 +523,9 @@
                     const th = document.createElement('th');
                     th.width = "85";
                     th.className = `text-center align-middle ${colorClass}`;
+                    const isQuantity = col.type === 'quantity';
                     th.innerHTML = `
-                        <div class="mb-1">${col.name} €</div>
+                        <div class="mb-1">${col.name}${isQuantity ? '' : ' €'}</div>
                         <input type="number" class="form-control form-control-sm text-center p-0 mx-auto" style="width: 65px; font-size: 0.75rem; line-height: 1.2;" placeholder="X Tutti" onchange="applyToAll('${col.id}', this.value)" title="Applica a tutti">
                     `;
                     headerRow.appendChild(th);
@@ -518,7 +538,9 @@
         window.applyToAll = function(colId, val) {
             if (val === '') return; // Se viene solo svuotato il campo non fa niente
             const amount = parseFloat(val) || 0;
-            if (confirm(`Confermi di voler impostare l'importo di € ${amount} per tutti in questa colonna?`)) {
+            const col = window.appData.columns.find(c => c.id === colId);
+            const valueLabel = col?.type === 'quantity' ? `${amount}` : `€ ${amount}`;
+            if (confirm(`Confermi di voler impostare ${valueLabel} per tutti in questa colonna?`)) {
                 window.appData.trasferta.forEach(t => {
                     if(!t.values) t.values = {};
                     t.values[colId] = amount;
@@ -530,10 +552,23 @@
 
         window.addNewColumn = function() {
             const name = prompt("Nome nuovo Tab:");
-            if(name && name.trim()) {
-                window.appData.columns.push({ id: 'col_'+Date.now(), name: name.trim(), enabled: true });
-                saveData(); renderTrip();
-            }
+            if(!name || !name.trim()) return;
+
+            const modalEl = document.getElementById('columnTypeModal');
+            const modal = new bootstrap.Modal(modalEl);
+            const euroBtn = document.getElementById('column-type-euro');
+            const quantityBtn = document.getElementById('column-type-quantity');
+
+            const createColumn = (type) => {
+                window.appData.columns.push({ id: 'col_'+Date.now(), name: name.trim(), enabled: true, type: type });
+                saveData();
+                renderTrip();
+                modal.hide();
+            };
+
+            euroBtn.onclick = () => createColumn('money');
+            quantityBtn.onclick = () => createColumn('quantity');
+            modal.show();
         };
         window.removeColumn = function() {
             if(!window.appData.columns.length) return;
@@ -559,6 +594,10 @@
             saveData(); renderTrip();
         };
 
+        function formatQuantity(value) {
+            return Number.isInteger(value) ? String(value) : String(parseFloat(value.toFixed(2)));
+        }
+
         window.renderTrip = function() {
             renderDynamicHeader();
             const tbody = document.querySelector('#table-trip tbody');
@@ -582,8 +621,8 @@
                 window.appData.columns.forEach((col, idx) => {
                     if(col.enabled) {
                         const val = parseFloat(item.values[col.id]) || 0;
-                        rowTotal += val;
-                        cellsHtml += `<td class="text-center p-1"><input type="text" inputmode="decimal" class="trip-input" value="${val===0?'':val}" placeholder="€" onfocus="this.select()" oninput="sanitizeAmountInput(this)" onblur="commitTripValue('${item.tripId}', '${col.id}', this)"></td>`;
+                        if(col.type !== 'quantity') rowTotal += val;
+                        cellsHtml += `<td class="text-center p-1"><input type="text" inputmode="decimal" class="trip-input" value="${val===0?'':val}" placeholder="${col.type === 'quantity' ? 'Qtà' : '€'}" onfocus="this.select()" oninput="sanitizeAmountInput(this)" onblur="commitTripValue('${item.tripId}', '${col.id}', this)"></td>`;
                     }
                 });
                 
@@ -636,7 +675,8 @@
             window.appData.columns.forEach((col, idx) => {
                 if(col.enabled) {
                     const colorClass = getColColor(idx);
-                    footerHtml += `<div class="col-total-item ${colorClass}" style="margin-right:10px;">${col.name}: € ${colTotals[col.id].toFixed(2)}</div>`;
+                    const isQuantity = col.type === 'quantity';
+                    footerHtml += `<div class="col-total-item ${colorClass}" style="margin-right:10px;">${col.name}: ${isQuantity ? formatQuantity(colTotals[col.id]) : '€ ' + colTotals[col.id].toFixed(2)}</div>`;
                 }
             });
             
@@ -928,8 +968,8 @@
                     let rTot = 0;
                     activeCols.forEach(c => {
                         const val = parseFloat(item.values?.[c.id])||0;
-                        rData.push(`€ ${val.toFixed(2)}`);
-                        rTot += val;
+                        rData.push(c.type === 'quantity' ? formatQuantity(val) : `€ ${val.toFixed(2)}`);
+                        if(c.type !== 'quantity') rTot += val;
                         colTotals[c.id] += val;
                     });
                     grandTotal += rTot;
@@ -967,7 +1007,7 @@
 
                     // Add totals breakdown
                     let breakdownText = "";
-                    activeCols.forEach(c => breakdownText += `${c.name}: €${colTotals[c.id].toFixed(2)}   `);
+                    activeCols.forEach(c => breakdownText += c.type === 'quantity' ? `${c.name}: ${formatQuantity(colTotals[c.id])}   ` : `${c.name}: €${colTotals[c.id].toFixed(2)}   `);
                     doc.text(breakdownText, 14, finalY);
 
                     finalY += 8;
