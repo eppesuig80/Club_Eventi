@@ -29,6 +29,10 @@
         .header-trip { background-color: var(--napoli-blue); } 
 
         .trip-input { width: 70px; text-align: right; border: 1px solid #ced4da; border-radius: 4px; padding: 4px; font-weight: bold; font-size: 0.85rem; }
+        #table-trip th { position: relative; }
+        #table-trip .col-resize-handle { position: absolute; top: 0; right: -4px; width: 9px; height: 100%; cursor: col-resize; touch-action: none; z-index: 8; }
+        #table-trip .col-resize-handle::after { content: ''; position: absolute; top: 15%; bottom: 15%; left: 4px; width: 1px; background: rgba(108,117,125,.32); }
+        #table-trip th.resizing { background-color: #eef5ff !important; }
         .trip-input:focus { border-color: var(--napoli-sky); outline: none; background-color: #f0f8ff; }
 
         /* MODIFICA 1: Rimuove le freccette su/giù dagli input numerici */
@@ -352,6 +356,7 @@
             soci: [], trasferta: [], archivioTrasferte:[], customLogo: null, 
             currentTripName: null, currentArchiveId: null,
             showPaid: true,
+            columnWidths: {},
             columns: JSON.parse(JSON.stringify(DEFAULT_COLS))
         };
         let editState = { isEditing: false, id: null };
@@ -416,6 +421,7 @@
             if(!Array.isArray(window.appData.soci)) window.appData.soci =[];
             if(!Array.isArray(window.appData.trasferta)) window.appData.trasferta =[];
             if(!Array.isArray(window.appData.archivioTrasferte)) window.appData.archivioTrasferte =[];
+            if(!window.appData.columnWidths || typeof window.appData.columnWidths !== 'object') window.appData.columnWidths = {};
             
             if(window.appData.customLogo) {
                 const img = document.getElementById('logo-preview');
@@ -446,6 +452,7 @@
                     if(!Array.isArray(window.appData.soci)) window.appData.soci = [];
                     if(!Array.isArray(window.appData.trasferta)) window.appData.trasferta = [];
                     if(!Array.isArray(window.appData.archivioTrasferte)) window.appData.archivioTrasferte = [];
+                    if(!window.appData.columnWidths || typeof window.appData.columnWidths !== 'object') window.appData.columnWidths = {};
 
                     try {
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(window.appData));
@@ -556,7 +563,7 @@
             const container = document.getElementById('dynamic-toggles');
             const headerRow = document.getElementById('trip-header-row');
             container.innerHTML = '';
-            headerRow.innerHTML = '<th>Nominativo</th>';
+            headerRow.innerHTML = '<th data-col-key="name">Nominativo</th>';
 
             window.appData.columns.forEach((col, idx) => {
                 const colorClass = getColColor(idx);
@@ -571,6 +578,7 @@
                 if(col.enabled) {
                     const th = document.createElement('th');
                     th.width = "85";
+                    th.dataset.colKey = col.id;
                     th.className = `text-center align-middle ${colorClass}`;
                     const isQuantity = col.type === 'quantity';
                     th.innerHTML = `
@@ -590,7 +598,83 @@
             container.appendChild(paidDiv);
 
             const paidHeaderLabel = window.appData.showPaid !== false ? 'Pag./Azioni' : 'Azioni';
-            headerRow.innerHTML += `<th>Tot.</th><th width="100">${paidHeaderLabel}</th>`;
+            headerRow.innerHTML += `<th data-col-key="total">Tot.</th><th data-col-key="actions" width="100">${paidHeaderLabel}</th>`;
+            initTripColumnResizers();
+        }
+
+        function getTripColumnMinWidth(key) {
+            if(key === 'name') return 90;
+            if(key === 'actions') return 72;
+            if(key === 'total') return 62;
+            return 58;
+        }
+
+        function applyTripColumnWidth(key, width) {
+            const table = document.getElementById('table-trip');
+            if(!table || !key || !width) return;
+            const th = table.querySelector(`thead th[data-col-key="${CSS.escape(key)}"]`);
+            if(!th) return;
+            const index = Array.from(th.parentElement.children).indexOf(th) + 1;
+            table.querySelectorAll(`tr > *:nth-child(${index})`).forEach(cell => {
+                cell.style.width = `${width}px`;
+                cell.style.minWidth = `${width}px`;
+                cell.style.maxWidth = `${width}px`;
+            });
+        }
+
+        function applySavedTripColumnWidths() {
+            const widths = window.appData.columnWidths || {};
+            Object.entries(widths).forEach(([key, width]) => applyTripColumnWidth(key, Number(width)));
+        }
+
+        function initTripColumnResizers() {
+            const headerRow = document.getElementById('trip-header-row');
+            if(!headerRow) return;
+
+            headerRow.querySelectorAll('th[data-col-key]').forEach(th => {
+                const key = th.dataset.colKey;
+                if(window.appData.columnWidths?.[key]) {
+                    const width = Number(window.appData.columnWidths[key]);
+                    th.style.width = `${width}px`;
+                    th.style.minWidth = `${width}px`;
+                    th.style.maxWidth = `${width}px`;
+                }
+
+                const handle = document.createElement('span');
+                handle.className = 'col-resize-handle';
+                handle.title = 'Trascina per allargare o restringere';
+                th.appendChild(handle);
+
+                handle.addEventListener('pointerdown', e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handle.setPointerCapture?.(e.pointerId);
+                    const startX = e.clientX;
+                    const startWidth = th.getBoundingClientRect().width;
+                    const minWidth = getTripColumnMinWidth(key);
+                    th.classList.add('resizing');
+
+                    const onMove = ev => {
+                        const newWidth = Math.max(minWidth, Math.round(startWidth + ev.clientX - startX));
+                        applyTripColumnWidth(key, newWidth);
+                    };
+
+                    const onUp = ev => {
+                        handle.removeEventListener('pointermove', onMove);
+                        handle.removeEventListener('pointerup', onUp);
+                        handle.removeEventListener('pointercancel', onUp);
+                        th.classList.remove('resizing');
+                        const finalWidth = Math.max(minWidth, Math.round(th.getBoundingClientRect().width));
+                        if(!window.appData.columnWidths || typeof window.appData.columnWidths !== 'object') window.appData.columnWidths = {};
+                        window.appData.columnWidths[key] = finalWidth;
+                        saveData();
+                    };
+
+                    handle.addEventListener('pointermove', onMove);
+                    handle.addEventListener('pointerup', onUp);
+                    handle.addEventListener('pointercancel', onUp);
+                });
+            });
         }
 
         // Funzione per applicare l'importo a tutti
@@ -681,7 +765,7 @@
                     if(col.enabled) {
                         const val = parseFloat(item.values[col.id]) || 0;
                         if(col.type !== 'quantity') rowTotal += val;
-                        cellsHtml += `<td class="text-center p-1"><input type="text" inputmode="decimal" class="trip-input" value="${val===0?'':val}" placeholder="${col.type === 'quantity' ? 'Qtà' : '€'}" onfocus="this.select()" oninput="sanitizeAmountInput(this)" onblur="commitTripValue('${item.tripId}', '${col.id}', this)"></td>`;
+                        cellsHtml += `<td data-col-key="${col.id}" class="text-center p-1"><input type="text" inputmode="decimal" class="trip-input" value="${val===0?'':val}" placeholder="${col.type === 'quantity' ? 'Qtà' : '€'}" onfocus="this.select()" oninput="sanitizeAmountInput(this)" onblur="commitTripValue('${item.tripId}', '${col.id}', this)"></td>`;
                     }
                 });
                 
@@ -695,7 +779,7 @@
                 const paidIcon = item.paid ? ' ✅' : '';
 
                 tr.innerHTML = `
-                    <td>
+                    <td data-col-key="name">
                         <div class="d-flex flex-column">
                             <span class="text-uppercase fw-bold ${nameClass}" style="font-size:0.85rem;">${item.cognome} ${item.nome}${paidIcon}</span>
                             ${item.note?`<span class="note-badge">${item.note}</span>`:''}
@@ -703,8 +787,8 @@
                         <i class="fa-solid fa-pen text-secondary ms-2 d-none d-md-inline" style="cursor:pointer; font-size:0.8rem;" onclick="editTripName('${item.tripId}')" title="Modifica Nome"></i>
                     </td>
                     ${cellsHtml}
-                    <td class="text-center total-cell">€ ${rowTotal.toFixed(2)}</td>
-                    <td class="text-center">
+                    <td data-col-key="total" class="text-center total-cell">€ ${rowTotal.toFixed(2)}</td>
+                    <td data-col-key="actions" class="text-center">
                         <div class="d-flex justify-content-center align-items-center gap-2">
                             ${window.appData.showPaid !== false ? `
                             <div class="form-check form-switch m-0" title="Pagato">
@@ -717,6 +801,8 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            applySavedTripColumnWidths();
 
             // AGGIORNA FOOTER: TOTALI PER COLONNA + TOTALE GENERALE
             const fContainer = document.getElementById('footer-totals-container');
