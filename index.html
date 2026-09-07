@@ -189,9 +189,13 @@
                         
                         <div class="toggle-wrapper">
                             <div id="dynamic-toggles" style="display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto;"></div>
-                            <div class="d-flex gap-1 ms-2">
+                            <div class="d-flex gap-1 ms-2 align-items-center">
                                 <div class="col-action-btn" onclick="addNewColumn()" title="Aggiungi Tab"><i class="fa-solid fa-plus"></i></div>
                                 <div class="col-action-btn btn-minus" onclick="removeColumn()" title="Rimuovi Tab"><i class="fa-solid fa-minus"></i></div>
+                                <div class="form-check form-switch m-0 ms-2 d-flex align-items-center" title="Mostra/Nascondi flag Pagato">
+                                    <input class="form-check-input" type="checkbox" id="toggle-paid-visibility" onchange="togglePaidVisibility()">
+                                    <label class="form-check-label small text-white fw-bold ms-1" for="toggle-paid-visibility" style="white-space:nowrap;">Pagato</label>
+                                </div>
                             </div>
                         </div>
                         
@@ -319,6 +323,7 @@
         window.appData = { 
             soci: [], trasferta: [], archivioTrasferte:[], customLogo: null, 
             currentTripName: null, currentArchiveId: null,
+            showPaid: true,
             columns: JSON.parse(JSON.stringify(DEFAULT_COLS))
         };
         let editState = { isEditing: false, id: null };
@@ -531,7 +536,12 @@
                     headerRow.appendChild(th);
                 }
             });
-            headerRow.innerHTML += '<th>Tot.</th><th width="100">Pag./Azioni</th>';
+
+            const paidVisibilityToggle = document.getElementById('toggle-paid-visibility');
+            if(paidVisibilityToggle) paidVisibilityToggle.checked = window.appData.showPaid !== false;
+
+            const paidHeaderLabel = window.appData.showPaid !== false ? 'Pag./Azioni' : 'Azioni';
+            headerRow.innerHTML += `<th>Tot.</th><th width="100">${paidHeaderLabel}</th>`;
         }
 
         // Funzione per applicare l'importo a tutti
@@ -647,9 +657,10 @@
                     <td class="text-center total-cell">€ ${rowTotal.toFixed(2)}</td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center align-items-center gap-2">
+                            ${window.appData.showPaid !== false ? `
                             <div class="form-check form-switch m-0" title="Pagato">
                                 <input class="form-check-input" type="checkbox" ${item.paid ? 'checked' : ''} onchange="togglePaid('${item.tripId}')" style="width: 35px; height: 18px;">
-                            </div>
+                            </div>` : ''}
                             <button class="btn btn-sm btn-warning py-0 px-1" onclick="addTripNote('${item.tripId}')"><i class="fa-solid fa-note-sticky"></i></button>
                             <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeFromTrip('${item.tripId}')"><i class="fa-solid fa-times"></i></button>
                         </div>
@@ -684,6 +695,12 @@
             footerHtml += `<div class="footer-item total-gen">TOTALE: € ${totalExpected.toFixed(2)}</div>`;
             
             fContainer.innerHTML = footerHtml;
+        };
+
+        window.togglePaidVisibility = function() {
+            window.appData.showPaid = window.appData.showPaid === false;
+            saveData();
+            renderTrip();
         };
 
         window.togglePaid = function(tripId) {
