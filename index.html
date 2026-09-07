@@ -59,6 +59,9 @@
         .trip-active-toolbar { background: #d7f4fb; border-bottom: 1px solid #b9dfe8; padding: 7px 10px; }
         .trip-archive-wrap { background: #fff; padding: 8px 10px; border-bottom: 1px solid #e5e7eb; }
         .trip-archive-btn { width: 100%; background: #ffc107; border-color: #ffc107; color: #111827; font-weight: 800; }
+        .trip-search-bar { display: flex !important; width: 100%; background: #fff !important; padding: 8px 10px !important; border-bottom: 1px solid #dee2e6 !important; }
+        .trip-search-bar .input-group-text { background: #fff; }
+        .trip-search-bar .form-control { min-width: 0; }
         .columns-compact-panel { display: none; background: #fff; border: 1px solid #d8dee6; border-radius: 12px; padding: 14px; margin: 10px; box-shadow: 0 12px 30px rgba(0,0,0,.20); position: relative; z-index: 30; }
         .columns-compact-panel.open { display: block; }
         .columns-panel-title { font-size: 1rem; font-weight: 800; color: #111827; }
@@ -124,6 +127,7 @@
             .columns-compact-panel { margin: 8px 10px 10px; }
             .columns-compact-panel #dynamic-toggles { gap: 11px 14px; }
             .trip-archive-wrap { padding: 8px 10px; }
+            #sec-trip .trip-search-bar { display: flex !important; visibility: visible !important; opacity: 1 !important; }
         }
         @media (min-width: 992px) { .section-view { display: block !important; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -234,7 +238,7 @@
                             </div>
                             <button type="button" class="btn btn-primary btn-sm w-100 fw-bold columns-compact-close" onclick="closeColumnsCompactPanel()">Chiudi</button>
                         </div>
-                        <div class="input-group input-group-sm p-2 bg-white border-bottom">
+                        <div class="input-group input-group-sm p-2 bg-white border-bottom trip-search-bar">
                             <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
                             <input type="text" class="form-control" id="search-trip" placeholder="Cerca socio..." oninput="renderTrip()">
                         </div>
