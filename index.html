@@ -28,11 +28,24 @@
         .header-db { background-color: #6c757d; } 
         .header-trip { background-color: var(--napoli-blue); } 
 
-        .trip-input { width: 70px; text-align: right; border: 1px solid #ced4da; border-radius: 4px; padding: 4px; font-weight: bold; font-size: 0.85rem; }
-        #table-trip th { position: relative; }
-        #table-trip .col-resize-handle { position: absolute; top: 0; right: -4px; width: 9px; height: 100%; cursor: col-resize; touch-action: none; z-index: 8; }
-        #table-trip .col-resize-handle::after { content: ''; position: absolute; top: 15%; bottom: 15%; left: 4px; width: 1px; background: rgba(108,117,125,.32); }
+        .trip-input { width: calc(100% - 8px); max-width: 70px; min-width: 0; box-sizing: border-box; text-align: right; border: 1px solid #ced4da; border-radius: 4px; padding: 4px; font-weight: bold; font-size: 0.85rem; }
+        #table-trip { table-layout: fixed; min-width: 100%; }
+        #table-trip th { position: relative; overflow: hidden; overflow-wrap: anywhere; word-break: normal; }
+        #table-trip td { overflow: hidden; overflow-wrap: anywhere; }
+        #table-trip th input { width: calc(100% - 8px) !important; max-width: 65px; min-width: 0; box-sizing: border-box; }
+        #table-trip .col-resize-handle { position: absolute; top: 0; right: -6px; width: 13px; height: 100%; cursor: col-resize; touch-action: none; z-index: 20; }
+        #table-trip .col-resize-handle::after { content: ''; position: absolute; top: 15%; bottom: 15%; left: 6px; width: 1px; background: rgba(108,117,125,.40); }
         #table-trip th.resizing { background-color: #eef5ff !important; }
+        #table-trip th.resizing .col-resize-handle::after { width: 2px; background: #0d6efd; }
+        .scroll-area { overflow-x: auto; }
+
+        @media (max-width: 991px) {
+            #table-trip .col-resize-handle { right: -12px; width: 25px; }
+            #table-trip .col-resize-handle::after { left: 12px; }
+            #table-trip th, #table-trip td { padding-left: 4px; padding-right: 4px; }
+            #table-trip .trip-input { width: 100%; max-width: 100%; padding-left: 2px; padding-right: 2px; }
+            #table-trip th input { width: 100% !important; max-width: 100%; }
+        }
         .trip-input:focus { border-color: var(--napoli-sky); outline: none; background-color: #f0f8ff; }
 
         /* MODIFICA 1: Rimuove le freccette su/giù dagli input numerici */
@@ -605,8 +618,8 @@
         function getTripColumnMinWidth(key) {
             if(key === 'name') return 90;
             if(key === 'actions') return 72;
-            if(key === 'total') return 62;
-            return 58;
+            if(key === 'total') return 58;
+            return 46;
         }
 
         function applyTripColumnWidth(key, width) {
@@ -660,9 +673,9 @@
                     };
 
                     const onUp = ev => {
-                        handle.removeEventListener('pointermove', onMove);
-                        handle.removeEventListener('pointerup', onUp);
-                        handle.removeEventListener('pointercancel', onUp);
+                        document.removeEventListener('pointermove', onMove);
+                        document.removeEventListener('pointerup', onUp);
+                        document.removeEventListener('pointercancel', onUp);
                         th.classList.remove('resizing');
                         const finalWidth = Math.max(minWidth, Math.round(th.getBoundingClientRect().width));
                         if(!window.appData.columnWidths || typeof window.appData.columnWidths !== 'object') window.appData.columnWidths = {};
@@ -670,9 +683,9 @@
                         saveData();
                     };
 
-                    handle.addEventListener('pointermove', onMove);
-                    handle.addEventListener('pointerup', onUp);
-                    handle.addEventListener('pointercancel', onUp);
+                    document.addEventListener('pointermove', onMove, { passive: false });
+                    document.addEventListener('pointerup', onUp, { passive: false });
+                    document.addEventListener('pointercancel', onUp, { passive: false });
                 });
             });
         }
