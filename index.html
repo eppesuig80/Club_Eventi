@@ -234,10 +234,6 @@
                             </div>
                             <button type="button" class="btn btn-primary btn-sm w-100 fw-bold columns-compact-close" onclick="closeColumnsCompactPanel()">Chiudi</button>
                         </div>
-                        <div class="input-group input-group-sm p-2 bg-white border-bottom">
-                            <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
-                            <input type="text" class="form-control" id="search-trip" placeholder="Cerca socio..." oninput="renderTrip()">
-                        </div>
                         <div class="scroll-area">
                             <table class="table table-bordered mb-0" id="table-trip">
                                 <thead class="table-light sticky-top text-center" style="top:0; z-index:5;"><tr id="trip-header-row"></tr></thead>
@@ -667,10 +663,6 @@
             tbody.innerHTML = '';
 
             let list =[...window.appData.trasferta];
-            const tripSearch = (document.getElementById('search-trip')?.value || '').trim().toLowerCase();
-            if(tripSearch) {
-                list = list.filter(item => `${item.cognome || ''} ${item.nome || ''}`.toLowerCase().includes(tripSearch));
-            }
             list.sort((a,b) => (a.cognome||'').localeCompare(b.cognome||''));
 
             let totalExpected = 0; 
