@@ -54,6 +54,14 @@
         
         .toggle-wrapper { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; background: rgba(255,255,255,0.15); padding: 5px 10px; border-radius: 8px; }
         .toggle-item { display: flex; align-items: center; margin-right: 10px; }
+        .columns-panel { --bs-offcanvas-width: 320px; }
+        .columns-panel #dynamic-toggles { display: flex; flex-direction: column; gap: 12px; }
+        .columns-panel .toggle-item { margin-right: 0; justify-content: flex-start; }
+        .columns-panel .toggle-item .form-check-label { color: #212529 !important; }
+        .columns-panel .col-action-btn { border-color: #ced4da; background: #f8f9fa; color: var(--napoli-blue); }
+        .columns-panel .col-action-btn:hover { background: var(--napoli-blue); color: white; }
+        .columns-filter-btn { border: 1px solid rgba(255,255,255,0.6); color: white; background: rgba(255,255,255,0.08); }
+        .columns-filter-btn:hover, .columns-filter-btn:focus { background: white; color: var(--napoli-blue); }
         
         .col-action-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); background: rgba(0,0,0,0.2); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
         .col-action-btn:hover { background: white; color: var(--napoli-blue); }
@@ -99,6 +107,7 @@
             .section-view { display: none; }
             .section-view.active { display: block; animation: fadeIn 0.3s; }
             .toggle-wrapper { width: 100%; overflow-x: auto; white-space: nowrap; padding-bottom: 8px; justify-content: flex-start; }
+            .columns-panel { --bs-offcanvas-width: min(88vw, 340px); }
             .card-header { flex-direction: column; align-items: stretch; }
             .header-title-container { justify-content: center; margin-bottom: 8px; }
             .footer-breakdown { flex-direction: column; align-items: flex-start; }
@@ -187,17 +196,9 @@
                             <div class="badge bg-white text-primary fs-6 ms-2" id="trip-count">0</div>
                         </div>
                         
-                        <div class="toggle-wrapper">
-                            <div id="dynamic-toggles" style="display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto;"></div>
-                            <div class="d-flex gap-1 ms-2 align-items-center">
-                                <div class="col-action-btn" onclick="addNewColumn()" title="Aggiungi Tab"><i class="fa-solid fa-plus"></i></div>
-                                <div class="col-action-btn btn-minus" onclick="removeColumn()" title="Rimuovi Tab"><i class="fa-solid fa-minus"></i></div>
-                                <div class="form-check form-switch m-0 ms-2 d-flex align-items-center" title="Mostra/Nascondi flag Pagato">
-                                    <input class="form-check-input" type="checkbox" id="toggle-paid-visibility" onchange="togglePaidVisibility()">
-                                    <label class="form-check-label small text-white fw-bold ms-1" for="toggle-paid-visibility" style="white-space:nowrap;">Pagato</label>
-                                </div>
-                            </div>
-                        </div>
+                        <button class="btn btn-sm columns-filter-btn ms-auto" type="button" data-bs-toggle="offcanvas" data-bs-target="#columnsPanel" aria-controls="columnsPanel" title="Gestione colonne">
+                            <i class="fa-solid fa-filter"></i>
+                        </button>
                         
                         <button class="btn btn-sm btn-warning text-dark fw-bold w-100 mt-2 mt-md-0 w-md-auto" data-bs-toggle="modal" data-bs-target="#archiveModal" onclick="renderArchiveList()">
                             <i class="fa-solid fa-folder-open"></i> Archivio
@@ -242,6 +243,32 @@
     <div class="mobile-nav">
         <button class="nav-btn" id="nav-btn-db" onclick="switchMobileView('db')"><i class="fa-solid fa-users"></i> DATABASE</button>
         <button class="nav-btn active" id="nav-btn-trip" onclick="switchMobileView('trip')"><i class="fa-solid fa-list-check"></i> TRASFERTA</button>
+    </div>
+
+    <!-- PANNELLO GESTIONE COLONNE -->
+    <div class="offcanvas offcanvas-end columns-panel" tabindex="-1" id="columnsPanel" aria-labelledby="columnsPanelLabel">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title fw-bold" id="columnsPanelLabel"><i class="fa-solid fa-filter me-2"></i>Gestione colonne</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Chiudi"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="small text-muted fw-bold text-uppercase mb-3">Colonne visibili</div>
+            <div id="dynamic-toggles"></div>
+
+            <hr>
+
+            <div class="d-flex align-items-center justify-content-between mb-3" title="Mostra/Nascondi flag Pagato">
+                <label class="form-check-label fw-bold" for="toggle-paid-visibility">Pagato</label>
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="toggle-paid-visibility" onchange="togglePaidVisibility()">
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary btn-sm flex-fill fw-bold" onclick="addNewColumn()"><i class="fa-solid fa-plus me-1"></i> Nuovo tab</button>
+                <button type="button" class="btn btn-outline-danger btn-sm flex-fill fw-bold" onclick="removeColumn()"><i class="fa-solid fa-minus me-1"></i> Elimina tab</button>
+            </div>
+        </div>
     </div>
 
     <!-- MODALE ARCHIVIO -->
